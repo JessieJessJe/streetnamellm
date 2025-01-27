@@ -7,12 +7,10 @@ export function Search({
     originalData,
     currentData,
     onFilter,
-    onReset
 }: SearchProps) {
     const [answer, setAnswer] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [query, setQuery] = useState('');
-    const [showContextHelp, setShowContextHelp] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

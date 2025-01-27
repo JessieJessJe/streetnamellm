@@ -58,11 +58,10 @@ export async function queryLLM({
     };
   } catch (error) {
     console.error("Error in queryLLM:", error);
-    throw error; // Or return a default error message
+    throw error;
   }
 }
 
-// Modified to handle an array of filters (OR logic)
 function applyFilters(
   entries: StreetNameEntry[],
   filterSet: Array<{
@@ -147,7 +146,10 @@ function buildFirstPrompt(question: string): string {
           `.trim();
 }
 
-function buildSecondPrompt(entries: any[], question: string): string {
+function buildSecondPrompt(
+  entries: StreetNameEntry[],
+  question: string
+): string {
   return `
     You are an intelligent assistant providing information about NYC honorary street names.
     The user's question is: "${question}"
