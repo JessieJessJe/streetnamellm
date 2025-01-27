@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { queryLLM } from '@/lib/llm';
+import { queryLLM } from '../lib/llm';
 
 interface SearchProps {
     originalData: any[];

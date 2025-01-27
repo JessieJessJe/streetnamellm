@@ -6,7 +6,7 @@ import { Search } from './Search';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
-const Map = dynamic(() => import('@/components/Map'), {
+const Map = dynamic(() => import('./Map'), {
     ssr: false,
     loading: () => <div className="h-[600px] bg-gray-50 rounded-xl animate-pulse" />
 });
@@ -14,41 +14,20 @@ const Map = dynamic(() => import('@/components/Map'), {
 interface SearchState {
     originalData: any[];
     currentData: any[];
-    history: Array<{ query: string; resultCount: number }>;
-    historyPointer: number;
 }
 
 export default function HomeWrapper({ allData }: { allData: any[] }) {
     const [searchState, setSearchState] = useState<SearchState>({
         originalData: allData,
         currentData: allData,
-        history: [],
-        historyPointer: -1
+
     });
 
     const handleNewSearch = (filteredEntries: any[], query: string) => {
         setSearchState(prev => {
-            const newHistory = [...prev.history.slice(0, prev.historyPointer + 1),
-            { query, resultCount: filteredEntries.length }];
-
             return {
                 ...prev,
                 currentData: filteredEntries,
-                history: newHistory,
-                historyPointer: newHistory.length - 1
-            };
-        });
-    };
-
-    const navigateHistory = (index: number) => {
-        setSearchState(prev => {
-            const historicalData = prev.history
-                .slice(0, index + 1);
-
-            return {
-                ...prev,
-                currentData: historicalData,
-                historyPointer: index
             };
         });
     };
@@ -57,8 +36,6 @@ export default function HomeWrapper({ allData }: { allData: any[] }) {
         setSearchState({
             originalData: allData,
             currentData: allData,
-            history: [],
-            historyPointer: -1
         });
     };
 
