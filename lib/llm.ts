@@ -112,18 +112,16 @@ function buildFirstPrompt(question: string): string {
   3. If we can't find a relevant answer, answer the question with your knowledge.".
 
 
-### Here's a sample filter criteria output if 2 is true. 
+### Here's a sample filter response if 2 is true. Your response should be a JSON array.
   [
     { "coname": "na", "location": "na", "borough": "manhattan", "reason": "violinist" },
     { "coname": "isaac stern place", "location": "na", "borough": "na", "reason": "na" }
   ]
 
-Here's more details on the filtering logic. We want to make it robust and flexible: For values within the filtering criteria object, we use AND logic. We use OR logic for the array. 
-- For example, if the user asks "who is Isaac Stern?", we would filter for "isaac stern" in the coname field, then another filter criteria for "isaac stern" in the reason field. 
-- If the user asks "what are the street names about famous people in brooklyn?", we would filter for "brooklyn" in the borough field, then another filter criteria for "famous" in the reason field as one criteria. 
-
 
 ### Examples Response:
+For some examples I provide a reason section to explain why I choose the filter criteria. But for your response, you should only provide the filter criteria.
+
   The user has asked: "Who are 9/11 heroes?"
   Your response:
    [{ "coname": "na", "location": "na", "borough": "na", "reason": "911 heroes" }]

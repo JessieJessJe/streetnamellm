@@ -21,7 +21,7 @@ export function Search({
 
         try {
             const response = await queryLLM({
-                entries: currentData,
+                entries: originalData,
                 question: query,
             });
 
