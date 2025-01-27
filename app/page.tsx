@@ -1,21 +1,35 @@
-import Image from "next/image";
+import { Suspense } from 'react';
+import MapContainer from '@/components/MapContainer';
+import { Search } from '@/components/Search';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
-export default function Home() {
+export default async function Home() {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_URL}/data/cleaned_data.json`);
+  const allData = await response.json();
+  // const [streetData, setStreetData] = useState(allData);
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+    <main className="min-h-screen p-4 md:p-8 bg-gray-50">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <header className="text-center space-y-2">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+            NYC Honorary Street Names
+          </h1>
+          <p className="text-gray-600 md:text-lg">
+            Exploring {allData.length.toLocaleString()} commemorative street signs
+          </p>
+        </header>
 
-      <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-        <li className="mb-2">
-          Get started by editing{" "}
-          <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-            app/page.tsx
-          </code>
-          .
-        </li>
-        <li>Save and see your changes instantly.</li>
-      </ol>
+        <Search data={allData} />
 
+        <Suspense fallback={<div>Loading map...</div>}>
+          <MapContainer data={allData} />
+        </Suspense>
 
-    </div>
+        <Analytics />
+        <SpeedInsights />
+      </div>
+    </main>
   );
 }
