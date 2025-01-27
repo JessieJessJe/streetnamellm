@@ -109,56 +109,66 @@ function buildFirstPrompt(question: string): string {
      - location: part of the street address to filter by (or 'na' if not applicable).
      - borough: a borough to filter by (or 'na' if not applicable).
      - reason: a keyword or topic in the "reason" field to filter by (or 'na' if not applicable).
-  3. If we can't find a relevant answer, answer the question with your knowledge.".
 
-
-### Here's a sample filter response if 2 is true. Your response should be a JSON array.
+Your response should always be an array of JSON objects AND nothing else. for example:
   [
     { "coname": "na", "location": "na", "borough": "manhattan", "reason": "violinist" },
     { "coname": "isaac stern place", "location": "na", "borough": "na", "reason": "na" }
   ]
 
+  3. If we can't find a relevant answer, answer the question with your knowledge and encourage the user to ask a different question.
 
 ### Examples Response:
-For some examples I provide a reason section to explain why I choose the filter criteria. But for your response, you should only provide the filter criteria.
 
+Example 1:
   The user has asked: "Who are 9/11 heroes?"
   Your response:
    [{ "coname": "na", "location": "na", "borough": "na", "reason": "911 heroes" }]
 
+Example 2:
   The user has asked: "Who are the artists that have honorary street names?"
+  Reasoning: this is an indirect question because we are not asking for specific street names. But the answer can be derived by analyzing from a pool of entries. This is your judgement to how to create the filter criteria to select the most relevant entries. A good start is to have a keyword in the reason field.
+
   Your response:
    [{ "coname": "na", "location": "na", "borough": "na", "reason": "artist" }]
-  Reason: this is an indirect question because we are not asking for specific street names. But the answer can be derived by analyzing from a pool of entries. This is your judgement to how to create the filter criteria to select the most relevant entries. A good start is to have a keyword in the reason field.
 
+Example 3:
   The user has asked: "What are the street names in brooklyn?"
+  Reasoning: this question is quite specific. We can filter for "brooklyn" in the borough field. And as a good practice to not miss a candidate entry, we add an additional filter criteria for "brooklyn" in the reason field.
+
   Your response:
    [{ "coname": "na", "location": "na", "borough": "brooklyn", "reason": "na" },
     { "coname": "na", "location": "na", "borough": "na", "reason": "brooklyn" }]
-  Reason: this question is quite specific. We can filter for "brooklyn" in the borough field. And as a good practice to not miss a candidate entry, we add an additional filter criteria for "brooklyn" in the reason field.
 
+Example 4:
   The user has asked: "What are the street names in williamsburg?"
+  Reasoning: this question is quite specific. But since williamsburg is part of brooklyn, we put brooklyn for borough and williamsburg in reason. As a good practice to not miss a candidate entry, we add an additional filter criteria for "williamsburg" in the reason field.
+
   Your response:
    [{ "coname": "na", "location": "na", "borough": "brooklyn", "reason": "williamsburg" }, { "coname": "na", "location": "na", "borough": "na", "reason": "williamsburg" }]
-  Reason: this question is quite specific. But since williamsburg is part of brooklyn, we put brooklyn for borough and williamsburg in reason. As a good practice to not miss a candidate entry, we add an additional filter criteria for "williamsburg" in the reason field.
 
-
+Example 5:
   The user has asked: "what are the street names about famous people in brooklyn??"
+  ReasonING: this question is quite specific. It requires joint filtering for a location and a subject. Notice for reason we have two filter criteria to catch all possible entries.
+
   Your response:
    [{ "coname": "na", "location": "na", "borough": "brooklyn", "reason": "famous" },
     { "coname": "na", "location": "na", "borough": "brooklyn", "reason": "famous people" }]
-  Reason: this question is quite specific. It requires joint filtering for a location and a subject. Notice for reason we have two filter criteria to catch all possible entries.
 
+Example 6:
   The user has asked: "in soho?"
+  Reasoning: soho is a neighborhood in manhattan. because for borough we only have 5 values, we can't filter for "soho" in the borough field. Thus we put soho in the reason field. and na in the location field and borough field.
+
   Your response:
    [{ "coname": "na", "location": "na", "borough": "na", "reason": "soho" }]
-  Reason: soho is a neighborhood in manhattan. because for borough we only have 5 values, we can't filter for "soho" in the borough field. Thus we put soho in the reason field. and na in the location field and borough field.
 
+Example 7:
   The user has asked: "who is Isaac Stern?"
   Your response:
    [{ "coname": "Isaac Stern", "location": "na", "borough": "na", "reason": "na" },
    { "coname": "na", "location": "na", "borough": "na", "reason": "Isaac Stern" }]
 
+Example 8:
   The user has asked: "How are you feeling?"
   Your response:
    "hello, I'm ready to help you exploring the nyc honorary street names. You can try "what are the street names in brooklyn?" or "who is Isaac Stern?""
