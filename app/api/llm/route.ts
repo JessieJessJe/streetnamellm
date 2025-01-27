@@ -29,21 +29,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
-// export async function POST(req: Request) {
-//   try {
-//     // Test basic functionality first
-//     return new Response(JSON.stringify({ message: "Test success" }), {
-//       status: 200,
-//       headers: { "Content-Type": "application/json" },
-//     });
-//   } catch (error) {
-//     return new Response(
-//       JSON.stringify({ error: "Failed to process request" }),
-//       {
-//         status: 500,
-//         headers: { "Content-Type": "application/json" },
-//       }
-//     );
-//   }
-// }
