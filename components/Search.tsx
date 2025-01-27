@@ -32,7 +32,7 @@ export function Search({
                 response.filteredEntries !== currentData) {
                 onFilter(response.filteredEntries, query);
             } else if (response.filteredEntries.length === 0) {
-                setAnswer(prev => `${prev}\n\nNo matching entries found.`);
+                setAnswer(prev => `${prev}\n\nNo matching entries found. Showing previous results.`);
             }
         } catch (error) {
             console.error('Search failed:', error);
