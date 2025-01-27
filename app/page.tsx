@@ -1,8 +1,7 @@
 import HomeWrapper from '../components/HomeWrapper';
+import { StreetNameEntry } from '../types';
+import data from './data/cleaned_data.json';
 
 export default async function Home() {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_URL}/data/cleaned_data.json`);
-  const allData = await response.json();
-
-  return <HomeWrapper allData={allData} />;
+  return <HomeWrapper allData={data as StreetNameEntry[]} />;
 }
