@@ -4,19 +4,10 @@
 import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { StreetNameEntry } from '../types';
 
 export type MapProps = {
-    data: Array<{
-        id: string;
-        coname: string;
-        lat: number;
-        lng: number;
-        reason: string;
-        year: number;
-        borough: string;
-        location: string;
-        postal: string;
-    }>;
+    data: Array<StreetNameEntry>;
 };
 
 export default function Map({ data }: MapProps) {

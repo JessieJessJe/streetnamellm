@@ -1,13 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { queryLLM } from '../lib/llm';
-
-interface SearchProps {
-    originalData: any[];
-    currentData: any[];
-    onFilter: (filteredEntries: any[], query: string) => void;
-    onReset: () => void;
-}
+import { SearchProps } from '../types';
 
 export function Search({
     originalData,

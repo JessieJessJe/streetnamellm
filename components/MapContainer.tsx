@@ -8,8 +8,6 @@ const Map = dynamic(() => import('./Map'), {
     loading: () => <div className="h-[600px] bg-gray-50 rounded-xl animate-pulse" />
 });
 
-interface MapContainerProps extends MapProps { }
-
-export default function MapContainer(props: MapContainerProps) {
+export default function MapContainer(props: MapProps) {
     return <Map {...props} />;
 }

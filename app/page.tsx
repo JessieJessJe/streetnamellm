@@ -1,4 +1,3 @@
-import { Suspense } from 'react';
 import HomeWrapper from '../components/HomeWrapper';
 
 export default async function Home() {

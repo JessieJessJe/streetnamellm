@@ -5,31 +5,24 @@ import dynamic from 'next/dynamic';
 import { Search } from './Search';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { StreetNameEntry, SearchState } from '../types';
 
 const Map = dynamic(() => import('./Map'), {
     ssr: false,
     loading: () => <div className="h-[600px] bg-gray-50 rounded-xl animate-pulse" />
 });
 
-interface SearchState {
-    originalData: any[];
-    currentData: any[];
-}
-
-export default function HomeWrapper({ allData }: { allData: any[] }) {
+export default function HomeWrapper({ allData }: { allData: StreetNameEntry[] }) {
     const [searchState, setSearchState] = useState<SearchState>({
         originalData: allData,
         currentData: allData,
-
     });
 
-    const handleNewSearch = (filteredEntries: any[], query: string) => {
-        setSearchState(prev => {
-            return {
-                ...prev,
-                currentData: filteredEntries,
-            };
-        });
+    const handleNewSearch = (filteredEntries: StreetNameEntry[]) => {
+        setSearchState(prev => ({
+            ...prev,
+            currentData: filteredEntries,
+        }));
     };
 
     const resetSearch = () => {

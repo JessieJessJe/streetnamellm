@@ -1,13 +1,4 @@
-interface LLMRequest {
-  entries: any[];
-  question: string;
-}
-
-interface LLMResponse {
-  answer: string;
-  filteredEntries: any[];
-  filteredCount: number;
-}
+import { LLMRequest, LLMResponse, StreetNameEntry } from "../types";
 
 export async function queryLLM({
   entries,
@@ -73,7 +64,7 @@ export async function queryLLM({
 
 // Modified to handle an array of filters (OR logic)
 function applyFilters(
-  entries: any[],
+  entries: StreetNameEntry[],
   filterSet: Array<{
     coname: string;
     location: string;
