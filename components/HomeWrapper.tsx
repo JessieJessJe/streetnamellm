@@ -38,8 +38,8 @@ export default function HomeWrapper({ allData }: { allData: StreetNameEntry[] })
     }));
 
     const ratio = [0.1, 0.17, 0.2, 0.28, 0.22, 0.18];
-    const offsetX = [0.5, 0.3, 0.1, 0.0, -0.3, -0.3];
-    const offsetY = [-0.4, 0, 0, 0, 0.1, 0.08];
+    const offsetX = [0.5, 0.3, 0.1, 0.0, -0.25, -0.3];
+    const offsetY = [-0.4, 0, 0, 0, 0.09, 0.08];
 
     const LandingPlates = () => {
         const [containerWidth, setContainerWidth] = useState(0);
@@ -85,15 +85,19 @@ export default function HomeWrapper({ allData }: { allData: StreetNameEntry[] })
     return (
         <main className="min-h-screen bg-gray-50 dark:bg-gray-900">
             <div className="flex flex-col lg:flex-row h-full lg:h-screen">
-                <div className="lg:w-2/5 flex items-center justify-center p-4">
-                    <div className="text-center">
-                        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100">
-                            Memories Around the Corner
-                        </h1>
-                        <p className="text-gray-600 dark:text-gray-400 md:text-lg mt-4">
-                            Exploring {allData.length.toLocaleString()} NYC commemorative street signs with LLM
-                        </p>
-                        <LandingPlates />
+                <div className="lg:w-2/5 h-full flex flex-col p-4">
+                    <div className="flex-1 flex items-end">
+                        <div className="text-center w-full">
+                            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100">
+                                Memories Around the Corner
+                            </h1>
+                            <p className="text-gray-600 dark:text-gray-400 md:text-lg mt-4">
+                                Exploring {allData.length.toLocaleString()} NYC commemorative street signs with LLM
+                            </p>
+                            <LandingPlates />
+                        </div>
+                    </div>
+                    <div className="flex-1">
                         <Search
                             originalData={searchState.originalData}
                             currentData={searchState.currentData}

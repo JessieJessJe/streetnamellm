@@ -53,9 +53,11 @@ export function Search({
                         type="text"
                         value={query}
                         onInput={(e) => setQuery(e.currentTarget.value)}
+                        onClick={() => answer && setQuery('')}
                         placeholder="Ask a questions about NYC street names"
                         className="flex-1 p-4 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                          dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
+                          dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:placeholder-gray-400
+                          transition-all duration-200 ease-in-out"
                     />
                     <button
                         type="submit"
@@ -74,7 +76,6 @@ export function Search({
                     'Famous musicians honored?',
                     'Streets honoring women?',
                     'Where is Walt Whitman Way?',
-                    'Ice cream?',
                 ].map((suggestion) => (
                     <button
                         key={suggestion}
