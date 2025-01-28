@@ -28,12 +28,14 @@ export function Search({
                 question: searchQuery,
             });
 
+
             setAnswer(response.answer);
+
 
             if (response.filteredEntries.length > 0) {
                 onFilter(response.filteredEntries, searchQuery);
             } else {
-                setAnswer(prev => `${prev}\n\nNo matching entries found.`);
+                setAnswer(prev => `${prev}\n\nNo matching entries found. Showing previous results.`);
             }
         } catch (error) {
             console.error('Search failed:', error);
@@ -44,8 +46,7 @@ export function Search({
     };
 
     return (
-        <div className="space-y-4">
-            {/* Search Form */}
+        <div className="space-y-4 px-4">
             <form onSubmit={handleSubmit} className="flex gap-2 flex-wrap">
                 <div className="flex-1 flex gap-2">
                     <input
@@ -67,7 +68,7 @@ export function Search({
                 </div>
             </form>
 
-            {/* Suggested Questions */}
+
             <div className="flex gap-2 flex-wrap justify-start mt-4">
                 {[
                     'Famous musicians honored?',
@@ -89,20 +90,25 @@ export function Search({
                 ))}
             </div>
 
-            {/* Answer Section */}
             <div className="space-y-4">
                 {answer && (
                     <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900">
-                        <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-bold text-lg dark:text-gray-100">Analysis</h3>
-                            <span className="text-sm text-gray-500 dark:text-gray-400">
-                                (Showing {currentData.length.toLocaleString()} of {originalData.length.toLocaleString()} total entries)
-                            </span>
-                        </div>
+                        <div className="flex flex-col space-y-4 text-left">
+                            <div className="space-y-2">
+                                <h3 className="font-bold text-lg dark:text-gray-100">Analysis</h3>
+                                <p className="whitespace-pre-wrap text-gray-900 dark:text-gray-300">
+                                    {answer}
+                                </p>
+                            </div>
 
-                        <p className="whitespace-pre-wrap text-gray-900 dark:text-gray-300 mb-4">
-                            {answer}
-                        </p>
+                            <div className="space-y-2">
+                                <h3 className="font-bold text-lg dark:text-gray-100">Map</h3>
+                                <span className="whitespace-pre-wrap text-gray-900 dark:text-gray-300">
+                                    Showing {currentData.length.toLocaleString()} of {originalData.length.toLocaleString()} total entries
+                                </span>
+
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>

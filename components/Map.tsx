@@ -60,11 +60,15 @@ export default function Map({ data }: MapProps) {
 
                     const popup = new mapboxgl.Popup({ offset: 25 })
                         .setHTML(`
-                            <div class="max-w-[300px]">
-                                <h3 class="font-semibold text-base mb-2">${entry.coname}</h3>
-                                <p class="text-sm text-gray-600">${entry.reason || 'No summary available'}</p>
-                                <div class="mt-2 text-xs text-gray-500">
-                                    <p>📍 ${entry.year || 'Year unknown'}</p>
+                            <div class="max-w-[300px] md:max-w-[500px]">
+                                <div class="max-h-[200px] md:max-h-[400px] overflow-y-auto px-3 py-2">
+                                    <h3 class="font-semibold text-base mb-2 text-gray-900">${entry.coname}</h3>
+                                    <div class="mt-2 text-sm text-gray-500 py-2">
+                                        <p>${entry.location || ''}</p>
+                                        <p>Year Created: ${entry.year || ''}</p>
+                                    </div>
+                                    <p class="text-sm text-gray-600 whitespace-pre-wrap">${entry.reason || 'No summary available'}</p>
+             
                                 </div>
                             </div>
                         `);
