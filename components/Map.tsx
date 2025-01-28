@@ -100,8 +100,8 @@ export default function Map({ data }: MapProps) {
     return (
         <div
             ref={mapContainer}
-            className="w-full h-[600px] rounded-xl shadow-lg border border-gray-200 
-            dark:border-gray-700 dark:shadow-gray-900"
+            className="w-full h-[400px] lg:h-full lg:w-full rounded-xl shadow-lg border border-gray-200 
+          dark:border-gray-700 dark:shadow-gray-900"
         />
     );
 }

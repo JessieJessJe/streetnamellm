@@ -33,31 +33,35 @@ export default function HomeWrapper({ allData }: { allData: StreetNameEntry[] })
     };
 
     return (
-        <main className="min-h-screen p-4 md:p-8 bg-gray-50 dark:bg-gray-900">
-            <div className="max-w-7xl mx-auto space-y-6">
-                <header className="text-center space-y-2">
-                    <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100">
-                        NYC Honorary Street Names
-                    </h1>
-                    <p className="text-gray-600 dark:text-gray-400 md:text-lg">
-                        Exploring {allData.length.toLocaleString()} commemorative street signs
-                    </p>
-                </header>
+        <main className="min-h-screen bg-gray-50 dark:bg-gray-900">
+            <div className="flex flex-col lg:flex-row h-full lg:h-screen">
+                {/* Left Panel: Header */}
+                <div className="lg:w-2/5 flex items-center justify-center p-4">
+                    <div className="text-center">
+                        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100">
+                            Memories Around the Corner
+                        </h1>
+                        <p className="text-gray-600 dark:text-gray-400 md:text-lg mt-4">
+                            Exploring {allData.length.toLocaleString()} NYC commemorative street signs with LLM
+                        </p>
+                        <Search
+                            originalData={searchState.originalData}
+                            currentData={searchState.currentData}
+                            onFilter={handleNewSearch}
+                            onReset={resetSearch}
+                        />
+                    </div>
+                </div>
 
-                <Search
-                    originalData={searchState.originalData}
-                    currentData={searchState.currentData}
-                    onFilter={handleNewSearch}
-                    onReset={resetSearch}
-                />
-
-                <Suspense fallback={<div>Loading map...</div>}>
-                    <Map data={searchState.currentData} />
-                </Suspense>
-
-                <Analytics />
-                <SpeedInsights />
+                {/* Right Panel: Map */}
+                <div className="flex-1 p-4">
+                    <Suspense fallback={<div>Loading map...</div>}>
+                        <Map data={searchState.currentData} />
+                    </Suspense>
+                </div>
             </div>
         </main>
+
+
     );
 }
