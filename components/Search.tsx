@@ -27,16 +27,9 @@ export function Search({
                 entries: originalData,
                 question: searchQuery,
             });
-
-
             setAnswer(response.answer);
+            onFilter(response.filteredEntries, searchQuery);
 
-
-            if (response.filteredEntries.length > 0) {
-                onFilter(response.filteredEntries, searchQuery);
-            } else {
-                setAnswer(prev => `${prev}\n\nNo matching entries found. Showing previous results.`);
-            }
         } catch (error) {
             console.error('Search failed:', error);
             setAnswer('Sorry, we encountered an error processing your request.');
