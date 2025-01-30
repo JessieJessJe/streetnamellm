@@ -1,85 +1,43 @@
 'use client';
 
-import { useState, Suspense, useRef, useEffect } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { Search } from './Search';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import { StreetNameEntry, SearchState } from '../types';
+import { StreetNameEntry } from '../types';
+import LandingPlate from './LandingPlate';
 
 const Map = dynamic(() => import('./Map'), {
     ssr: false,
     loading: () => <div className="h-[600px] bg-gray-50 rounded-xl animate-pulse" />
 });
 
+// Fetch all data from Weaviate
+async function fetchAllStreetNames(): Promise<StreetNameEntry[]> {
+    try {
+        const response = await fetch('/api/weaviate-all'); // New API route (to be added in `route.ts`)
+        if (!response.ok) throw new Error('Failed to fetch data');
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching Weaviate data:', error);
+        return []; // Return empty array on failure
+    }
+}
+
 export default function HomeWrapper({ allData }: { allData: StreetNameEntry[] }) {
-    const [searchState, setSearchState] = useState<SearchState>({
-        originalData: allData,
-        currentData: allData,
-    });
+
+    const [currentData, setCurrentData] = useState<StreetNameEntry[]>(allData);
 
     const handleNewSearch = (filteredEntries: StreetNameEntry[]) => {
-        setSearchState(prev => ({
-            ...prev,
-            currentData: filteredEntries,
-        }));
+        setCurrentData(filteredEntries);
     };
 
+    // Reset to full dataset when Clear is clicked
     const resetSearch = () => {
-        setSearchState({
-            originalData: allData,
-            currentData: allData,
-        });
+        setCurrentData(allData);
     };
 
-    const plates = [0, 1, 2, 3, 4, 5].map(i => ({
-        id: i,
-        url: `https://raw.githubusercontent.com/JessieJessJe/nyc-conaming/main/src/images/plate${i}.png`
-    }));
-
-    const ratio = [0.1, 0.17, 0.2, 0.28, 0.22, 0.18];
-    const offsetX = [0.5, 0.3, 0.1, 0.0, -0.25, -0.3];
-    const offsetY = [-0.4, 0, 0, 0, 0.09, 0.08];
-
-    const LandingPlates = () => {
-        const [containerWidth, setContainerWidth] = useState(0);
-        const containerRef = useRef<HTMLDivElement>(null);
-
-        useEffect(() => {
-            const observer = new ResizeObserver((entries) => {
-                const [entry] = entries;
-                if (entry) {
-                    setContainerWidth(entry.contentRect.width);
-                }
-            });
-
-            if (containerRef.current) {
-                observer.observe(containerRef.current);
-            }
-
-            return () => observer.disconnect();
-        }, []);
-
-        return (
-            <div className="relative w-full h-full" ref={containerRef}>
-                <div className="flex flex-wrap justify-center items-center gap-1 md:gap-2 px-4">
-                    {plates.map((plate, i) => (
-                        <img
-                            key={plate.id}
-                            src={plate.url}
-                            alt={`Street Sign ${plate.id}`}
-                            style={{
-                                width: `${ratio[i] * containerWidth * 0.7}px`,
-                                transform: `translateX(${offsetX[i] * ratio[i] * containerWidth}px) translateY(${offsetY[i] * ratio[i] * containerWidth}px)`,
-
-                            }}
-                            className="h-auto transition-transform duration-300 hover:-translate-y-2"
-                        />
-                    ))}
-                </div>
-            </div>
-        );
-    };
 
 
     return (
@@ -94,13 +52,13 @@ export default function HomeWrapper({ allData }: { allData: StreetNameEntry[] })
                             <p className="text-gray-600 dark:text-gray-400 md:text-lg mt-4">
                                 Exploring {allData.length.toLocaleString()} NYC commemorative street signs with LLM
                             </p>
-                            <LandingPlates />
+                            <LandingPlate />
                         </div>
                     </div>
                     <div className="flex-1">
                         <Search
-                            originalData={searchState.originalData}
-                            currentData={searchState.currentData}
+                            originalData={allData}
+                            currentData={currentData}
                             onFilter={handleNewSearch}
                             onReset={resetSearch}
                         />
@@ -110,7 +68,7 @@ export default function HomeWrapper({ allData }: { allData: StreetNameEntry[] })
                 {/* Right Panel: Map */}
                 <div className="flex-1 p-4">
                     <Suspense fallback={<div>Loading map...</div>}>
-                        <Map data={searchState.currentData} />
+                        <Map data={currentData} />
                     </Suspense>
                 </div>
             </div>

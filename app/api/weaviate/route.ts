@@ -1,11 +1,29 @@
 import { NextResponse } from "next/server";
 import weaviate, { WeaviateClient } from "weaviate-client";
+import { StreetNameEntry } from "../../../types";
 
 const weaviateURL = process.env.WEAVIATE_URL as string;
 const weaviateKey = process.env.WEAVIATE_ADMIN_KEY as string;
 
 // Lazy initialization to prevent await errors in global scope
 let client: WeaviateClient | null = null;
+
+function parseWeaviateResults(results: any): StreetNameEntry[] {
+  return results.map((obj: any) => {
+    const props = obj.properties;
+
+    return {
+      record_id: props.record_id,
+      honorary_name: props.honorary_name,
+      borough: props.borough,
+      type: props.type,
+      limits: props.limits || "N/A",
+      bio: props.bio || "No biography available",
+      geometry_wkt: props.geometry_wkt,
+      geolocation: props.geolocation || undefined,
+    };
+  });
+}
 
 async function getWeaviateClient() {
   if (!client) {
@@ -54,7 +72,8 @@ export async function POST(req: Request) {
         });
       }
 
-      return NextResponse.json({ results: result });
+      const parsedEntries = parseWeaviateResults(result.objects);
+      return NextResponse.json({ parsedEntries });
     }
   } catch (error) {
     console.error("Weaviate API error:", error);

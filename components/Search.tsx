@@ -7,6 +7,7 @@ export function Search({
     originalData,
     currentData,
     onFilter,
+    onReset
 }: SearchProps) {
     const [answer, setAnswer] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -59,6 +60,16 @@ export function Search({
                           disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors"
                     >
                         {isLoading ? 'Analyzing...' : 'Search'}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setQuery(''); // ✅ Clears input
+                            onReset(); // ✅ Restores full dataset
+                        }}
+                        className="px-6 py-4 bg-gray-400 text-white rounded-lg"
+                    >
+                        Clear
                     </button>
                 </div>
             </form>
