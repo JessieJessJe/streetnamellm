@@ -1,4 +1,4 @@
-import { LLMRequest, LLMResponse, StreetNameEntry } from "../types";
+import { LLMRequest, LLMResponse } from "../types";
 
 export async function queryLLM({ question }: LLMRequest): Promise<LLMResponse> {
   try {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense, useEffect } from 'react';
+import { useState, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { Search } from './Search';
 import { Analytics } from '@vercel/analytics/react';
@@ -12,18 +12,6 @@ const Map = dynamic(() => import('./Map'), {
     ssr: false,
     loading: () => <div className="h-[600px] bg-gray-50 rounded-xl animate-pulse" />
 });
-
-// Fetch all data from Weaviate
-async function fetchAllStreetNames(): Promise<StreetNameEntry[]> {
-    try {
-        const response = await fetch('/api/weaviate-all'); // New API route (to be added in `route.ts`)
-        if (!response.ok) throw new Error('Failed to fetch data');
-        return await response.json();
-    } catch (error) {
-        console.error('Error fetching Weaviate data:', error);
-        return []; // Return empty array on failure
-    }
-}
 
 export default function HomeWrapper({ allData }: { allData: StreetNameEntry[] }) {
 
@@ -37,8 +25,6 @@ export default function HomeWrapper({ allData }: { allData: StreetNameEntry[] })
     const resetSearch = () => {
         setCurrentData(allData);
     };
-
-
 
     return (
         <main className="min-h-screen bg-gray-50 dark:bg-gray-900">

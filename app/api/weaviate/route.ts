@@ -44,7 +44,7 @@ export async function POST(req: Request) {
     const client = await getWeaviateClient();
     const collection = client.collections.get("HonoraryStreet");
 
-    let result: any;
+    let parsedEntries: StreetNameEntry[] = [];
 
     if (location !== null) {
       // Convert location name to lat/lng using OpenStreetMap
@@ -56,23 +56,24 @@ export async function POST(req: Request) {
       if (geoData.length > 0) {
         const { lat, lon } = geoData[0];
 
-        result = await collection.query.nearText(searchTerms, {
+        const result = await collection.query.nearText(searchTerms, {
           filters: collection.filter.byProperty("geolocation").withinGeoRange({
             latitude: lat,
             longitude: lon,
             distance: 1000,
           }),
         });
+        parsedEntries = parseWeaviateResults(result.objects);
       } else {
         // Perform hybrid vector search
-        result = await collection.query.hybrid(searchTerms, {
+        const result = await collection.query.hybrid(searchTerms, {
           alpha: 0.5,
           limit: 10,
           returnMetadata: ["score", "explainScore"],
         });
+        parsedEntries = parseWeaviateResults(result.objects);
       }
 
-      const parsedEntries = parseWeaviateResults(result.objects);
       return NextResponse.json({ parsedEntries });
     }
   } catch (error) {
