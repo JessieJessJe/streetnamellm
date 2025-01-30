@@ -51,7 +51,7 @@ export async function queryLLM({ question }: LLMRequest): Promise<LLMResponse> {
     }
 
     // 4️⃣ Call OpenAI LLM to generate a summary
-    const summaryPrompt = buildSummaryPrompt(filteredEntries);
+    const summaryPrompt = buildSummaryPrompt(filteredEntries, question);
     const summaryResponse = await fetch("/api/llm", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -110,7 +110,10 @@ function buildFirstPrompt(question: string): string {
 }
 
 // Helper function to build OpenAI prompt for summary
-function buildSummaryPrompt(entries: StreetNameEntry[]): string {
+function buildSummaryPrompt(
+  entries: StreetNameEntry[],
+  question: string
+): string {
   const formattedEntries = entries
     .map(
       (entry, index) =>
@@ -121,11 +124,7 @@ function buildSummaryPrompt(entries: StreetNameEntry[]): string {
 
   return `
       You are an AI that provides a short summary of NYC honorary street names.
-  
-      Given the following list of honorary streets and their descriptions, summarize the key themes:
-  
+      Given the following list of honorary streets and their descriptions, answer the following "${question}" 
       ${formattedEntries}
-  
-      Summarize the main themes of these honorary street names in 2-3 sentences.
     `.trim();
 }

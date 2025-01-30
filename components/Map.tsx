@@ -16,7 +16,6 @@ export default function Map({ data }: MapProps) {
     const markers = useRef<mapboxgl.Marker[]>([]);
 
     useEffect(() => {
-        // Validate Mapbox token
         if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
             console.error('Mapbox token is missing');
             return;
@@ -25,7 +24,6 @@ export default function Map({ data }: MapProps) {
         if (!mapContainer.current) return;
 
         try {
-            // Initialize map only once
             if (!map.current) {
                 map.current = new mapboxgl.Map({
                     container: mapContainer.current,
@@ -33,7 +31,7 @@ export default function Map({ data }: MapProps) {
                     style: 'mapbox://styles/mapbox/light-v11',
                     center: [-74.006, 40.7128],
                     zoom: 11,
-                    maxBounds: [[-74.3, 40.4], [-73.6, 40.9]] // Restrict to NYC area
+                    maxBounds: [[-74.3, 40.4], [-73.6, 40.9]]
                 });
 
                 map.current.on('load', () => {
@@ -50,14 +48,17 @@ export default function Map({ data }: MapProps) {
             if (!map.current) return;
 
             try {
-                // Add this helper function to determine color based on score
-                const getMarkerColor = (score: number) => {
-                    // Assuming score is between 0 and 1
-                    // You can adjust these colors and opacity values as needed
-                    const baseColor = '#3b82f6'; // blue
-                    const opacity = 0.3 + (score * 0.7); // opacity between 0.3 and 1.0
+                const scores = data.map(entry => entry.score || 0);
+                const minScore = Math.min(...scores);
+                const maxScore = Math.max(...scores);
 
-                    // Convert hex to rgba
+                const getMarkerColor = (score: number) => {
+                    const normalizedScore = maxScore === minScore
+                        ? 0.5
+                        : (score - minScore) / (maxScore - minScore);
+
+                    const baseColor = '#226600';
+                    const opacity = 0.2 + (normalizedScore * 0.8);
                     const r = parseInt(baseColor.slice(1, 3), 16);
                     const g = parseInt(baseColor.slice(3, 5), 16);
                     const b = parseInt(baseColor.slice(5, 7), 16);
@@ -65,18 +66,21 @@ export default function Map({ data }: MapProps) {
                     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
                 };
 
-                // Clear existing markers
                 markers.current.forEach(marker => marker.remove());
                 markers.current = [];
+
+                // NEW: Initialize bounds calculation
+                const bounds = new mapboxgl.LngLatBounds();
 
                 data.forEach(entry => {
                     if (!entry.geolocation) return;
 
                     const { longitude, latitude } = entry.geolocation;
 
-                    // Use the score to determine marker color
-                    const markerColor = getMarkerColor(entry.score || 0);
+                    // NEW: Extend bounds with each marker's location
+                    bounds.extend([longitude, latitude]);
 
+                    const markerColor = getMarkerColor(entry.score || 0);
                     const popup = new mapboxgl.Popup({ offset: 25 })
                         .setHTML(`
                             <div class="max-w-[300px] md:max-w-[500px]">
@@ -100,6 +104,20 @@ export default function Map({ data }: MapProps) {
 
                     markers.current.push(marker);
                 });
+
+                // NEW: Auto-zoom to markers
+                if (!bounds.isEmpty() && map.current) {
+                    map.current.fitBounds(bounds, {
+                        padding: 40,
+                        maxZoom: 15,
+                        duration: 2000
+                    });
+                } else {
+                    map.current?.flyTo({
+                        center: [-74.006, 40.7128],
+                        zoom: 11
+                    });
+                }
             } catch (error) {
                 console.error('Error adding markers:', error);
             }

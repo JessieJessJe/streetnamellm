@@ -56,20 +56,10 @@ export function Search({
                     <button
                         type="submit"
                         disabled={!query.trim() || isLoading}
-                        className="px-6 py-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 
+                        className="bg-secondary px-6 py-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 
                           disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors"
                     >
                         {isLoading ? 'Analyzing...' : 'Search'}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setQuery(''); // ✅ Clears input
-                            onReset(); // ✅ Restores full dataset
-                        }}
-                        className="px-6 py-4 bg-gray-400 text-white rounded-lg"
-                    >
-                        Clear
                     </button>
                 </div>
             </form>
@@ -98,20 +88,37 @@ export function Search({
             <div className="space-y-4">
                 {answer && (
                     <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900">
-                        <div className="flex flex-col space-y-4 text-left">
-                            <div className="space-y-2">
-                                <h3 className="font-bold text-lg dark:text-gray-100">Analysis</h3>
-                                <p className="whitespace-pre-wrap text-gray-900 dark:text-gray-300">
-                                    {answer}
-                                </p>
-                            </div>
+                        <div className="relative">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setQuery('');
+                                    onReset();
+                                }}
+                                className="absolute top-0 right-0 px-3 py-2 text-gray-600 hover:text-gray-800 
+                                    dark:text-gray-400 dark:hover:text-gray-200 rounded-lg flex items-center gap-2 
+                                    hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                                Clear
+                            </button>
+                            <div className="flex flex-col space-y-4 text-left">
+                                <div className="space-y-2">
+                                    <h3 className="font-bold text-lg dark:text-gray-100">Analysis</h3>
+                                    <p className="whitespace-pre-wrap text-gray-900 dark:text-gray-300">
+                                        {answer}
+                                    </p>
+                                </div>
 
-                            <div className="space-y-2">
-                                <h3 className="font-bold text-lg dark:text-gray-100">Map</h3>
-                                <span className="whitespace-pre-wrap text-gray-900 dark:text-gray-300">
-                                    Showing {currentData.length.toLocaleString()} of {originalData.length.toLocaleString()} total entries
-                                </span>
+                                <div className="space-y-2">
+                                    <h3 className="font-bold text-lg dark:text-gray-100">Map</h3>
+                                    <span className="whitespace-pre-wrap text-gray-900 dark:text-gray-300">
+                                        Showing {currentData.length.toLocaleString()} of {originalData.length.toLocaleString()} total entries
+                                    </span>
 
+                                </div>
                             </div>
                         </div>
                     </div>
