@@ -18,7 +18,7 @@ export type StreetNameEntry = {
   limits: string; // Street limits
   bio: string; // Biography of the honoree
   geometry_wkt?: string; // WKT format for linestrings
-  geolocation?: {
+  geolocation: {
     longitude: number;
     latitude: number;
   }; // Now using nested geolocation instead of lat/lng

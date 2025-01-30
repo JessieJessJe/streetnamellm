@@ -35,7 +35,7 @@ export async function queryLLM({ question }: LLMRequest): Promise<LLMResponse> {
 
     const weaviateData = await weaviateResponse.json();
 
-    console.log(weaviateData, "weaviateData");
+    console.log(weaviateData.parsedEntries, "weaviateData");
     // 3 Return results for visualization
     return {
       //   answer:
