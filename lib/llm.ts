@@ -1,90 +1,54 @@
 import { LLMRequest, LLMResponse, StreetNameEntry } from "../types";
 
-export async function queryLLM({
-  entries,
-  question,
-}: LLMRequest): Promise<LLMResponse> {
+export async function queryLLM({ question }: LLMRequest): Promise<LLMResponse> {
   try {
-    // Step 1: Get filter criteria or direct answer from LLM
+    // 1 Call OpenAI to extract location & search terms
     const firstPrompt = buildFirstPrompt(question);
     const firstResponse = await fetch("/api/llm", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt: firstPrompt }),
     });
-
     if (!firstResponse.ok) throw new Error("LLM first request failed");
+
     const firstResult = await firstResponse.json();
 
-    console.log(firstResult, "first");
+    let queryParams = { location: "null", searchTerms: "newyork" };
 
-    // If the response isn't a filter array (question is super irrelevant), return result directly.
-    if (!firstResult.result.startsWith("[")) {
-      return {
-        answer: firstResult.result,
-        filteredEntries: entries,
-        filteredCount: entries.length,
-      };
-    }
-
-    // Parse and apply filters
-    let filteredEntries = entries;
     try {
-      const filterCriteria = JSON.parse(firstResult.result);
-      filteredEntries = applyFilters(entries, filterCriteria);
+      queryParams = JSON.parse(firstResult.result);
     } catch (error) {
-      console.error("Failed to parse filter criteria:", error);
+      console.error("Failed to parse query params:", error);
     }
 
-    //Step 2.1 if no entries found: LLM answer according to internet knowledge. Trigger semantic search.
-    if (filteredEntries.length === 0) {
-      const prompt = buildNullPrompt(question);
-      const response = await fetch("/api/llm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
-      });
+    // 2️ Call Weaviate API route
 
-      if (!response.ok) throw new Error("LLM buildnullprompt request failed");
-      const result = await response.json();
+    console.log(queryParams, "queryParams");
 
-      // If the response isn't a filter array (LLM could not find internet answers), return result directly.
-      if (!result.result.startsWith("[")) {
-        return {
-          answer: result.result,
-          filteredEntries: entries,
-          filteredCount: entries.length,
-        };
-      }
+    const { searchTerms, location } = queryParams;
 
-      try {
-        const filterCriteria = JSON.parse(result.result);
-        filteredEntries = applyFilters(entries, filterCriteria);
-      } catch (error) {
-        console.error("Failed to parse filter criteria:", error); // Fallback to original entries on error
-      }
-
-      console.log(result, filteredEntries, "nullprompt");
-    }
-
-    // Step 2.2: Generate summary from filtered entries
-    const entriesForLLM = filteredEntries.slice(0, 10);
-    const prompt = buildSecondPrompt(entriesForLLM, question);
-    const response = await fetch("/api/llm", {
+    const weaviateResponse = await fetch("/api/weaviate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify({ searchTerms, location }),
     });
 
-    if (!response.ok) throw new Error("LLM second request failed");
-    const result = await response.json();
+    const weaviateData = await weaviateResponse.json();
 
-    console.log(result, filteredEntries, "second");
+    console.log(weaviateData, "weaviateData");
 
+    // 3 Return results for visualization
     return {
-      answer: result.result,
-      filteredEntries: filteredEntries,
-      filteredCount: filteredEntries.length,
+      answer:
+        weaviateData.results.objects.map(
+          (obj: any) => obj.properties.honorary_name
+        ) || "No relevant street names found.",
+      filteredCount: weaviateData.results ? weaviateData.results.length : 0,
+      filteredEntries: [],
+
+      //   answer: "hello",
+      //   filteredCount: 0,
+      //   filteredEntries: [],
     };
   } catch (error) {
     console.error("Error in queryLLM:", error);
@@ -121,77 +85,32 @@ function applyFilters(
 
 function buildFirstPrompt(question: string): string {
   return `
-  You are an intelligent assistant with access to a dataset about NYC honorary street names.
-  
-  Each entry in the dataset contains the following structure:
-  - Name (coname): The street's honorary name.
-  - Location (location): The street's address. This will be a street name, or two street names if the honorary name is an intersection.
-  - Borough (borough): The borough where the street is located, values are "manhattan", "brooklyn", "queens", "staten island", "bronx".
-  - Reason (reason): Why the street is named. 
-  
-  The user has asked: "${question}"
-  
-  ### Your Task:
-  1. Determine if we can find some relevant answer from the dataset. Assume question is about street names even if it is not explicitly stated.
-  2. If we can, provide SQL like filter criteria for the dataset. 
-     Filter criteria is abstracted from question. 
-     Your response should always be a valid array of JSON objects that can be parsed by JSON.parse(). It begins with '[' and ends with ']'. 
-     
-     Inside, each object should have the following attributes:
-     - coname: a name or honorary street name or 'na' 
-     - location: a street name or 'na'
-     - borough: "manhattan", "brooklyn", "queens", "staten island", "bronx" or 'na'
-     - reason:  a keyword or 'na'
+    You are an intelligent assistant with access to a dataset about NYC honorary street names.
+    The user has asked: "${question}"
+      ### Your Task:
+      1. analyze the question and extract "location" and "searchTerms" info for vector search.
+      2. return in JSON format. FOR EXAMPLE: {"location": "brooklyn", "searchTerms": "musicians"}
 
-    For example, this is a valid response:
-    [
-        { "coname": "na", "location": "na", "borough": "na", "reason": "violinist" },
-        { "coname": "isaac stern place", "location": "na", "borough": "na", "reason": "na" }
-    ]
-    this is not a valid response:
-    { "coname": "na", "location": "na", "borough": "na", "reason": "violinist" }
+      To extract "location":
+      If the question contains a neighborhood, borough, or specific street, extract it. if not, return "null"
 
-    this is not a valid response:
-    [
-        { "coname": "na", "location": "na", "borough": "na", "reason": "violinist" },
-        { "coname": "isaac stern place", "location": "na", "borough": "na
+      To extract "searchTerms" for vector search.
+     - Identify key concepts (e.g., musicians, artists, scientists, activists).  
+     - Expand broad concepts into related term. (e.g., "creative people" → "artists", "musicians")  
 
-  3. If we can't find a relevant answer, answer the question with your knowledge in 2~3 sentences and encourage the user to ask one follow up question. 
+     Example 1:
+     User Question: "Street names about love?"
+     Your response: {"location": "null", "searchTerms": "love"}
 
-### Examples User Question and  Your Response:
-Example 1:
-  User Question: "Who are the crazy people?"
-  Your response:
-   [{ "coname": "na", "location": "na", "borough": "na", "reason": "crazy" }, 
-    { "coname": "na", "location": "na", "borough": "na", "reason": "crazy people" }, 
-    { "coname": "george carlin", "location": "na", "borough": "na", "reason": "na" },
-    { "coname": "jimi hendrix", "location": "na", "borough": "na", "reason": "na" },
-    { "coname": "jean michel basquiat", "location": "na", "borough": "na", "reason": "na" }]
+    Example 2:
+    User Question: "Street names about musicians in WILLIAMSBURG?"
+    Your response: {"location": "williamsburg", "searchTerms": "musicians"}
 
-Example 2:
-  User Question: "What are the street names in brooklyn?"
-  Your response:
-   [{ "coname": "na", "location": "na", "borough": "brooklyn", "reason": "na" },
-    { "coname": "na", "location": "na", "borough": "na", "reason": "brooklyn" }]
+    Example 3:
+    User Question: "near the Brooklyn Bridge?"
+    Your response: {"location": "brooklyn bridge", "searchTerms": "brooklyn bridge"
 
-Example 3:
-  User Question: "street names in williamsburg?"
-  Your response:
-   [{ "coname": "na", "location": "na", "borough": "brooklyn", "reason": "williamsburg"}, 
-    { "coname": "na", "location": "na", "borough": "na", "reason": "williamsburg" }]
-
-Example 4:
-  User Question: "who is Isaac Stern?"
-  Your response:
-   [{ "coname": "Isaac Stern", "location": "na", "borough": "na", "reason": "na" },
-    { "coname": "na", "location": "na", "borough": "na", "reason": "Isaac Stern" }]
-
-Example 5:
-  User Question: "How are you feeling?"
-  Your response:
-   "hello, I'm ready to help you exploring the nyc honorary street names. You can try "what are the street names in brooklyn?" or "who is Isaac Stern?""
-
-          `.trim();
+  `.trim();
 }
 
 function buildSecondPrompt(
