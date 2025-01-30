@@ -22,6 +22,7 @@ export type StreetNameEntry = {
     longitude: number;
     latitude: number;
   }; // Now using nested geolocation instead of lat/lng
+  score?: number;
 };
 
 export interface SearchState {

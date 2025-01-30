@@ -50,13 +50,32 @@ export default function Map({ data }: MapProps) {
             if (!map.current) return;
 
             try {
+                // Add this helper function to determine color based on score
+                const getMarkerColor = (score: number) => {
+                    // Assuming score is between 0 and 1
+                    // You can adjust these colors and opacity values as needed
+                    const baseColor = '#3b82f6'; // blue
+                    const opacity = 0.3 + (score * 0.7); // opacity between 0.3 and 1.0
+
+                    // Convert hex to rgba
+                    const r = parseInt(baseColor.slice(1, 3), 16);
+                    const g = parseInt(baseColor.slice(3, 5), 16);
+                    const b = parseInt(baseColor.slice(5, 7), 16);
+
+                    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+                };
+
                 // Clear existing markers
                 markers.current.forEach(marker => marker.remove());
                 markers.current = [];
+
                 data.forEach(entry => {
-                    if (!entry.geolocation) return; // Skip entries with no geolocation
+                    if (!entry.geolocation) return;
 
                     const { longitude, latitude } = entry.geolocation;
+
+                    // Use the score to determine marker color
+                    const markerColor = getMarkerColor(entry.score || 0);
 
                     const popup = new mapboxgl.Popup({ offset: 25 })
                         .setHTML(`
@@ -72,8 +91,8 @@ export default function Map({ data }: MapProps) {
                         `);
 
                     const marker = new mapboxgl.Marker({
-                        color: '#3b82f6',
-                        scale: 0.8
+                        color: markerColor,
+                        scale: 0.8,
                     })
                         .setLngLat([longitude, latitude])
                         .setPopup(popup)

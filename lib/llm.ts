@@ -1,4 +1,5 @@
 import { LLMRequest, LLMResponse } from "../types";
+import { StreetNameEntry } from "../types";
 
 export async function queryLLM({ question }: LLMRequest): Promise<LLMResponse> {
   try {
@@ -36,18 +37,37 @@ export async function queryLLM({ question }: LLMRequest): Promise<LLMResponse> {
     const weaviateData = await weaviateResponse.json();
 
     console.log(weaviateData.parsedEntries, "weaviateData");
-    // 3 Return results for visualization
-    return {
-      //   answer:
-      //     weaviateData.results.objects.map(
-      //       (obj: any) => obj.properties.honorary_name
-      //     ) || "No relevant street names found.",
-      //   filteredCount: weaviateData.results ? weaviateData.results.length : 0,
-      filteredEntries: weaviateData.parsedEntries,
 
-      answer: "hello",
-      filteredCount: 0,
-      //   filteredEntries: [],
+    // 3 Return results for visualization
+    //placeholder for calling llm to generate a summary answer
+    // 3️⃣ Filter the top 10 most relevant results
+    let filteredEntries: StreetNameEntry[] = weaviateData.parsedEntries || [];
+
+    // If more than 10 results, sort by score and pick top 10
+    if (filteredEntries.length > 10) {
+      filteredEntries = filteredEntries
+        .sort((a, b) => (b.score ?? 0) - (a.score ?? 0)) // Sort descending by score
+        .slice(0, 10);
+    }
+
+    // 4️⃣ Call OpenAI LLM to generate a summary
+    const summaryPrompt = buildSummaryPrompt(filteredEntries);
+    const summaryResponse = await fetch("/api/llm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: summaryPrompt }),
+    });
+
+    let summary = "No summary available.";
+    if (summaryResponse.ok) {
+      const summaryResult = await summaryResponse.json();
+      summary = summaryResult.result || summary;
+    }
+
+    return {
+      answer: summary, //this should be the summary answer
+      filteredEntries: weaviateData.parsedEntries,
+      filteredCount: weaviateData.parsedEntries.length,
     };
   } catch (error) {
     console.error("Error in queryLLM:", error);
@@ -70,9 +90,9 @@ function buildFirstPrompt(question: string): string {
      - Identify key concepts (e.g., musicians, artists, scientists, activists).  
      - Expand broad concepts into related term. (e.g., "creative people" → "artists", "musicians")  
 
-     Example 1:
-     User Question: "Street names about love?"
-     Your response: {"location": "null", "searchTerms": "love"}
+    Example 1:
+    User Question: "Street names about love?"
+    Your response: {"location": "null", "searchTerms": "love"}
 
     Example 2:
     User Question: "Street names about musicians in WILLIAMSBURG?"
@@ -82,5 +102,30 @@ function buildFirstPrompt(question: string): string {
     User Question: "near the Brooklyn Bridge?"
     Your response: {"location": "brooklyn bridge", "searchTerms": "brooklyn bridge"
 
+    Example 4:
+    User Question: "where is walt whitman street?"
+    Your response: {"location": "null", "searchTerms": "walt whitman"
+
   `.trim();
+}
+
+// Helper function to build OpenAI prompt for summary
+function buildSummaryPrompt(entries: StreetNameEntry[]): string {
+  const formattedEntries = entries
+    .map(
+      (entry, index) =>
+        `${index + 1}. **${entry.honorary_name}** 
+        }) - ${entry.bio}`
+    )
+    .join("\n");
+
+  return `
+      You are an AI that provides a short summary of NYC honorary street names.
+  
+      Given the following list of honorary streets and their descriptions, summarize the key themes:
+  
+      ${formattedEntries}
+  
+      Summarize the main themes of these honorary street names in 2-3 sentences.
+    `.trim();
 }

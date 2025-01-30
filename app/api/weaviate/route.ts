@@ -8,7 +8,12 @@ const weaviateKey = process.env.WEAVIATE_ADMIN_KEY as string;
 let client: WeaviateClient | null = null;
 
 // Update the response type to explicitly define geolocation structure
+type WeaviateMetadata = {
+  score?: number;
+};
+
 type WeaviateResponseObject = {
+  metadata?: WeaviateMetadata;
   properties: {
     record_id?: string;
     honorary_name?: string;
@@ -26,7 +31,7 @@ function parseWeaviateResults(
 ): StreetNameEntry[] {
   if (!results?.length) return [];
 
-  return results.map(({ properties }) => {
+  return results.map(({ properties, metadata }) => {
     const geolocation =
       typeof properties.geolocation === "object" &&
       properties.geolocation !== null
@@ -45,6 +50,7 @@ function parseWeaviateResults(
         latitude: Number(geolocation.latitude),
         longitude: Number(geolocation.longitude),
       },
+      score: metadata?.score,
     };
   });
 }
@@ -79,20 +85,25 @@ export async function POST(req: Request) {
 
       if (geoData.length > 0) {
         const { lat, lon } = geoData[0];
-        const result = await collection.query.nearText(searchTerms, {
+        const result = await collection.query.hybrid(searchTerms, {
+          limit: 100,
           filters: collection.filter.byProperty("geolocation").withinGeoRange({
             latitude: parseFloat(lat),
             longitude: parseFloat(lon),
             distance: 1000,
           }),
+          returnMetadata: ["score", "explainScore"],
         });
         results = result.objects || [];
       }
     } else {
       const result = await collection.query.hybrid(searchTerms, {
-        alpha: 0.5,
-        limit: 10,
+        alpha: 0.1,
+        limit: 100,
+        maxVectorDistance: 0.5,
+        returnMetadata: ["score", "explainScore"],
       });
+
       results = result.objects || [];
     }
 
