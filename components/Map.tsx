@@ -8,20 +8,17 @@ import { StreetNameEntry } from '../types';
 
 export type MapProps = {
     data: Array<StreetNameEntry>;
+    isSearchActive: boolean;
 };
 
-export default function Map({ data }: MapProps) {
+export default function Map({ data, isSearchActive }: MapProps) {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<mapboxgl.Map | null>(null);
     const markers = useRef<mapboxgl.Marker[]>([]);
+    const clusterSourceId = 'street-names-cluster';
 
     useEffect(() => {
-        if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
-            console.error('Mapbox token is missing');
-            return;
-        }
-
-        if (!mapContainer.current) return;
+        if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN || !mapContainer.current) return;
 
         try {
             if (!map.current) {
@@ -34,113 +31,320 @@ export default function Map({ data }: MapProps) {
                     maxBounds: [[-74.3, 40.4], [-73.6, 40.9]]
                 });
 
+                // Wait for map style to load before adding sources and layers
                 map.current.on('load', () => {
-                    if (map.current) addMarkers();
-                });
-            } else {
-                addMarkers();
-            }
-        } catch (error) {
-            console.error('Error initializing map:', error);
-        }
+                    if (!map.current) return;
 
-        function addMarkers() {
-            if (!map.current) return;
-
-            try {
-                const scores = data.map(entry => entry.score || 0);
-                const minScore = Math.min(...scores);
-                const maxScore = Math.max(...scores);
-
-                const getMarkerColor = (score: number) => {
-                    const normalizedScore = maxScore === minScore
-                        ? 0.5
-                        : (score - minScore) / (maxScore - minScore);
-
-                    const baseColor = '#226600';
-                    const opacity = 0.2 + (normalizedScore * 0.8);
-                    const r = parseInt(baseColor.slice(1, 3), 16);
-                    const g = parseInt(baseColor.slice(3, 5), 16);
-                    const b = parseInt(baseColor.slice(5, 7), 16);
-
-                    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-                };
-
-                markers.current.forEach(marker => marker.remove());
-                markers.current = [];
-
-                // NEW: Initialize bounds calculation
-                const bounds = new mapboxgl.LngLatBounds();
-
-                data.forEach(entry => {
-                    if (!entry.geolocation) return;
-
-                    const { longitude, latitude } = entry.geolocation;
-
-                    // NEW: Extend bounds with each marker's location
-                    bounds.extend([longitude, latitude]);
-
-                    const markerColor = getMarkerColor(entry.score || 0);
-                    const popup = new mapboxgl.Popup({ offset: 25 })
-                        .setHTML(`
-                            <div class="max-w-[300px] md:max-w-[500px]">
-                                <div class="max-h-[200px] md:max-h-[400px] overflow-y-auto px-3 py-2">
-                                    <h3 class="font-semibold text-base mb-2 text-gray-900">${entry.honorary_name}</h3>
-                                    <div class="mt-2 text-sm text-gray-500 py-2">
-                                        <p>${entry.limits || ''}</p>
-                                    </div>
-                                    <p class="text-sm text-gray-600 whitespace-pre-wrap">${entry.bio || 'No summary available'}</p>
-                                </div>
-                            </div>
-                        `);
-
-                    const marker = new mapboxgl.Marker({
-                        color: markerColor,
-                        scale: 0.8,
-                    })
-                        .setLngLat([longitude, latitude])
-                        .setPopup(popup)
-                        .addTo(map.current!);
-
-                    markers.current.push(marker);
-                });
-
-                // NEW: Auto-zoom to markers
-                if (!bounds.isEmpty() && map.current) {
-                    map.current.fitBounds(bounds, {
-                        padding: 40,
-                        maxZoom: 15,
-                        duration: 2000
+                    // Remove existing layers first
+                    ['clusters', 'cluster-count', 'unclustered-points', 'search-results'].forEach(layerId => {
+                        if (map.current?.getLayer(layerId)) {
+                            map.current.removeLayer(layerId);
+                        }
                     });
-                } else {
-                    map.current?.flyTo({
-                        center: [-74.006, 40.7128],
-                        zoom: 11
-                    });
-                }
-            } catch (error) {
-                console.error('Error adding markers:', error);
-            }
-        }
 
-        return () => {
-            try {
-                markers.current.forEach(marker => marker.remove());
+                    // Then remove existing source if it exists
+                    if (map.current.getSource(clusterSourceId)) {
+                        map.current.removeSource(clusterSourceId);
+                    }
+
+                    // Add source
+                    map.current.addSource(clusterSourceId, {
+                        type: 'geojson',
+                        data: getGeoJsonData(data),
+                        cluster: !isSearchActive,
+                        clusterMaxZoom: 14,
+                        clusterRadius: 50
+                    });
+
+                    // Add layers
+                    if (isSearchActive) {
+                        addSearchResults();
+                    } else {
+                        addClusterLayers();
+                    }
+
+                    updateMapVisibility();
+                    fitToBounds(data);
+                });
+            }
+
+            return () => {
                 if (map.current) {
                     map.current.remove();
                     map.current = null;
                 }
-            } catch (error) {
-                console.error('Error cleaning up map:', error);
+            };
+        } catch (error) {
+            console.error('Map initialization error:', error);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!map.current) return;
+
+        // Wait for style to be fully loaded
+        if (!map.current.isStyleLoaded()) {
+            map.current.once('style.load', () => updateMapData());
+            return;
+        }
+
+        updateMapData();
+    }, [data, isSearchActive]);
+
+    const updateMapData = () => {
+        if (!map.current) return;
+
+        try {
+            // Remove existing layers first
+            ['clusters', 'cluster-count', 'unclustered-points', 'search-results'].forEach(layerId => {
+                if (map.current?.getLayer(layerId)) {
+                    map.current.removeLayer(layerId);
+                }
+            });
+
+            // Then remove and recreate the source
+            if (map.current.getSource(clusterSourceId)) {
+                map.current.removeSource(clusterSourceId);
             }
+
+            map.current.addSource(clusterSourceId, {
+                type: 'geojson',
+                data: getGeoJsonData(data),
+                cluster: !isSearchActive,
+                clusterMaxZoom: 14,
+                clusterRadius: 50
+            });
+
+            // Add appropriate layers
+            if (isSearchActive) {
+                // addSearchResults();
+                addIndividualMarkers(data);
+            } else {
+                addClusterLayers();
+            }
+
+            fitToBounds(data);
+        } catch (error) {
+            console.error('Map update error:', error);
+        }
+    };
+
+    const getGeoJsonData = (entries: StreetNameEntry[]): GeoJSON.FeatureCollection => ({
+        type: 'FeatureCollection',
+        features: entries
+            .filter(entry => !!entry.geolocation)
+            .map(entry => ({
+                type: 'Feature',
+                geometry: {
+                    type: 'Point',
+                    coordinates: [entry.geolocation!.longitude, entry.geolocation!.latitude]
+                },
+                properties: entry
+            }))
+    });
+
+    const addClusterLayers = () => {
+        if (!map.current) return;
+
+        // Clear existing markers
+        markers.current.forEach(marker => marker.remove());
+        markers.current = [];
+
+        // Remove existing layer if it exists
+        if (map.current.getLayer('search-results')) {
+            map.current.removeLayer('search-results');
+        }
+        // Cluster circles
+        map.current.addLayer({
+            id: 'clusters',
+            type: 'circle',
+            source: clusterSourceId,
+            filter: ['has', 'point_count'],
+            paint: {
+                'circle-color': [
+                    'step',
+                    ['get', 'point_count'],
+                    'rgba(200, 200, 200, 1)',
+                    10,
+                    'rgba(190, 195, 190, 1)',
+                    30,
+                    'rgba(180, 190, 180, 1)'
+                ],
+                'circle-radius': ['step', ['get', 'point_count'], 20, 10, 30, 20, 40],
+                'circle-blur': 0.6,
+                'circle-opacity': 0.8,
+                'circle-stroke-width': 1.5,
+                'circle-stroke-color': [
+                    'step',
+                    ['get', 'point_count'],
+                    'rgba(200, 200, 200, 0.3)',
+                    10,
+                    'rgba(190, 195, 190, 0.3)',
+                    30,
+                    'rgba(180, 190, 180, 0.3)'
+                ]
+            }
+        });
+
+        // Cluster labels
+        map.current.addLayer({
+            id: 'cluster-count',
+            type: 'symbol',
+            source: clusterSourceId,
+            filter: ['has', 'point_count'],
+            layout: {
+                'text-field': '{point_count_abbreviated}',
+                'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+                'text-size': 12
+            }
+        });
+
+        // Individual points in cluster mode
+        map.current.addLayer({
+            id: 'unclustered-points',
+            type: 'circle',
+            source: clusterSourceId,
+            filter: ['!', ['has', 'point_count']],
+            paint: {
+                'circle-color': 'rgba(200, 200, 200, 1.0)',
+                'circle-radius': 8,
+                'circle-stroke-width': 2,
+                'circle-stroke-color': 'rgba(10, 10, 10, 1)',
+                'circle-opacity': 0.9
+            }
+        });
+
+        // Click handler for cluster points
+        map.current.on('click', 'unclustered-points', (e) => {
+            if (!e.features || !map.current) return;
+            const coordinates = (e.features[0].geometry as GeoJSON.Point).coordinates.slice();
+            const entry = e.features[0].properties as StreetNameEntry;
+
+            new mapboxgl.Popup()
+                .setLngLat(coordinates as [number, number])
+                .setHTML(createPopupContent(entry))
+                .addTo(map.current);
+        });
+    };
+
+    const addSearchResults = () => {
+        if (!map.current) return;
+
+        // Search results layer
+        map.current.addLayer({
+            id: 'search-results',
+            type: 'circle',
+            source: clusterSourceId,
+            paint: {
+                'circle-color': [
+                    'interpolate',
+                    ['linear'],
+                    ['get', 'normalized_score'],
+                    0, 'rgba(250, 250, 250, 1)',
+                    1, 'rgba(34, 102, 0, 1)'
+                ],
+                'circle-radius': 8,
+                'circle-blur': 0.1,
+                'circle-stroke-width': 1,
+                'circle-stroke-color': 'rgba(34, 102, 0, 1)',
+                'circle-opacity': 0.8
+            }
+        });
+
+        // Click handler for search results
+        map.current.on('click', 'search-results', (e) => {
+            if (!e.features || !map.current) return;
+            const coordinates = (e.features[0].geometry as GeoJSON.Point).coordinates.slice();
+            const properties = e.features[0].properties || {};
+
+            new mapboxgl.Popup()
+                .setLngLat(coordinates as [number, number])
+                .setHTML(createPopupContent(properties as StreetNameEntry))
+                .addTo(map.current);
+        });
+    };
+
+    const addIndividualMarkers = (entries: StreetNameEntry[]) => {
+        // Clear existing markers
+        markers.current.forEach(marker => marker.remove());
+        markers.current = [];
+
+        const scores = entries.map(entry => entry.score || 0);
+        const minScore = Math.min(...scores);
+        const maxScore = Math.max(...scores);
+
+        const getMarkerColor = (score: number) => {
+            const normalizedScore = maxScore === minScore ? 0.5 : (score - minScore) / (maxScore - minScore);
+            const startColor = { r: 128, g: 128, b: 128 };
+            const endColor = { r: 34, g: 102, b: 0 };
+
+            const r = Math.round(startColor.r + (endColor.r - startColor.r) * normalizedScore);
+            const g = Math.round(startColor.g + (endColor.g - startColor.g) * normalizedScore);
+            const b = Math.round(startColor.b + (endColor.b - startColor.b) * normalizedScore);
+            const opacity = 0.4 + (normalizedScore * 0.6);
+
+            return `rgba(${r}, ${g}, ${b}, ${opacity})`;
         };
-    }, [data]);
+
+        entries.forEach(entry => {
+            if (!entry.geolocation) return;
+
+            const marker = new mapboxgl.Marker({
+                color: getMarkerColor(entry.score || 0),
+                scale: 0.8
+            })
+                .setLngLat([entry.geolocation.longitude, entry.geolocation.latitude])
+                .setPopup(new mapboxgl.Popup().setHTML(createPopupContent(entry)));
+
+            if (map.current) marker.addTo(map.current);
+            markers.current.push(marker);
+        });
+    };
+
+    const updateMapVisibility = () => {
+        if (!map.current) return;
+        const visibility = isSearchActive ? 'none' : 'visible';
+        ['clusters', 'cluster-count', 'unclustered-points'].forEach(layer => {
+            if (map.current?.getLayer(layer)) {
+                map.current.setLayoutProperty(layer, 'visibility', visibility);
+            }
+        });
+    };
+
+    const createPopupContent = (entry: StreetNameEntry) => `
+        <div class="max-w-[300px] md:max-w-[500px]">
+            <div class="max-h-[200px] md:max-h-[400px] overflow-y-auto px-3 py-2">
+                <h3 class="font-semibold text-base mb-2 text-gray-900">${entry.honorary_name}</h3>
+                <div class="mt-2 text-sm text-gray-500 py-2">
+                    <p>${entry.limits || ''}</p>
+                </div>
+                <p class="text-sm text-gray-600 whitespace-pre-wrap">${entry.bio || 'No summary available'}</p>
+            </div>
+        </div>
+    `;
+
+    const fitToBounds = (entries: StreetNameEntry[]) => {
+        if (!map.current) return;
+
+        const bounds = new mapboxgl.LngLatBounds();
+        entries.forEach(entry => {
+            if (entry.geolocation) bounds.extend([entry.geolocation.longitude, entry.geolocation.latitude]);
+        });
+
+        if (!bounds.isEmpty()) {
+            map.current.fitBounds(bounds, {
+                padding: 40,
+                maxZoom: isSearchActive ? 15 : 11,
+                duration: 2000
+            });
+        }
+    };
 
     return (
         <div
             ref={mapContainer}
             className="w-full h-[400px] lg:h-full lg:w-full rounded-xl shadow-lg border border-gray-200 
-          dark:border-gray-700 dark:shadow-gray-900"
+            dark:border-gray-700 dark:shadow-gray-900"
         />
     );
 }

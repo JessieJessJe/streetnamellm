@@ -54,7 +54,7 @@ export default function HomeWrapper({ allData }: { allData: StreetNameEntry[] })
                 {/* Right Panel: Map */}
                 <div className="flex-1 p-4">
                     <Suspense fallback={<div>Loading map...</div>}>
-                        <Map data={currentData} />
+                        <Map data={currentData} isSearchActive={currentData.length < 1000} />
                     </Suspense>
                 </div>
             </div>
