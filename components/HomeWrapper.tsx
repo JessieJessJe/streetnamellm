@@ -69,7 +69,7 @@ export default function HomeWrapper({ allData }: { allData: StreetNameEntry[] })
 
                 {/* Mobile footer */}
                 <div className="lg:hidden text-xs text-gray-500 dark:text-gray-400 p-4 flex items-center justify-center gap-1 mb-1">
-                    made by jessiehan.xyz | have geedback?
+                    made by jessiehan.xyz | have feedback?
                     <a href="mailto:onejessie@gmail.com" className="inline-flex items-center">
                         <FaEnvelope className="h-3 w-3" />
                     </a>
