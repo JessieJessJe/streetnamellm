@@ -33,11 +33,11 @@ export default function HomeWrapper({ allData }: { allData: StreetNameEntry[] })
                 <div className="lg:w-2/5 h-full flex flex-col">
                     <div className="flex-1 flex items-end mt-4">
                         <div className="text-center w-full">
-                            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100">
+                            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 px-4">
                                 Memories Around the Corner
                             </h1>
-                            <p className="text-gray-600 dark:text-gray-400 md:text-lg mt-4">
-                                Exploring {allData.length.toLocaleString()} NYC commemorative street signs with LLM
+                            <p className="text-gray-600 dark:text-gray-400 md:text-lg mt-4 px-4">
+                                Exploring {allData.length.toLocaleString()} NYC commemorative street signs from NYC Open Data with LLM
                             </p>
                             <LandingPlate />
                         </div>
