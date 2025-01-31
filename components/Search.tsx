@@ -12,25 +12,25 @@ export function Search({
     const [answer, setAnswer] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [query, setQuery] = useState('');
-    const [suggestions, setSuggestions] = useState<string[]>([]);
-    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [suggestedQueries, setSuggestedQueries] = useState<string[]>([]);
 
-    // Suggested queries
-    const popularQueries = [
-        "Which NYC streets honor musicians?",
-        "Which streets are named after women?",
-        "Where is Walt Whitman Way?"
+    const allPopularQueries = [
+        "Streets honor musicians?",
+        "How about restaurants and local businesses?",
+        "Any streets in Greenpoint?",
+        "Where is the Museum Mile?",
+        "Tell me a love story"
     ];
 
+    // Function to get 3 random queries
+    const getRandomQueries = () => {
+        const shuffled = [...allPopularQueries].sort(() => 0.5 - Math.random());
+        return shuffled.slice(0, 3);
+    };
+
     useEffect(() => {
-        if (query.trim()) {
-            setShowSuggestions(true);
-            const filtered = popularQueries.filter(q => q.toLowerCase().includes(query.toLowerCase()));
-            setSuggestions(filtered.length ? filtered : ["No suggestions found"]);
-        } else {
-            setShowSuggestions(false);
-        }
-    }, [query]);
+        setSuggestedQueries(getRandomQueries());
+    }, []);
 
     const handleSubmit = async (e?: React.FormEvent, predefinedQuery?: string) => {
         if (e) e.preventDefault();
@@ -52,57 +52,45 @@ export function Search({
             setAnswer('Oops! Something went wrong. Try again.');
         } finally {
             setIsLoading(false);
+            setSuggestedQueries(getRandomQueries()); // Refresh suggested queries
         }
+    };
+
+    const handleClear = () => {
+        setQuery('');
+        setAnswer('');
+        onReset();
+        setSuggestedQueries(getRandomQueries());
     };
 
     return (
         <div className="space-y-4 px-4 max-w-full">
-            {/* Search Bar */}
-            <form onSubmit={handleSubmit} className="relative w-full">
+            {/* Search Bar - Mobile Max Height */}
+            <form onSubmit={handleSubmit} className="w-full max-h-[40vh] sm:max-h-[50vh]">
                 <div className="flex items-center gap-2">
                     <input
                         type="text"
                         value={query}
                         onChange={(e) => setQuery(e.currentTarget.value)}
-                        onClick={() => answer && setQuery('')}
-                        placeholder="Curious about NYC street names? Ask away!"
-                        className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                        placeholder="What would you like to know?"
+                        className="w-full p-4 rounded-lg focus:ring-2 focus:ring-primary 
                           dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder-gray-400
                           transition-all duration-200 ease-in-out"
                     />
                     <button
                         type="submit"
                         disabled={!query.trim() || isLoading}
-                        className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 
+                        className="px-6 py-4 bg-black text-white rounded-lg hover:bg-secondary
                           disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors"
                     >
                         {isLoading ? 'Searching...' : 'Search'}
                     </button>
                 </div>
-
-                {/* Auto-Suggest Dropdown */}
-                {showSuggestions && (
-                    <div className="absolute top-full mt-1 left-0 w-full bg-white dark:bg-gray-800 shadow-lg rounded-lg z-10 max-h-40 overflow-auto">
-                        {suggestions.map((suggestion, idx) => (
-                            <div
-                                key={idx}
-                                className="p-3 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-300"
-                                onClick={() => {
-                                    setQuery(suggestion);
-                                    setShowSuggestions(false);
-                                    handleSubmit(undefined, suggestion);
-                                }}
-                            >
-                                {suggestion}
-                            </div>
-                        ))}
-                    </div>
-                )}
             </form>
 
             {/* Suggested Queries */}
             <div className="flex gap-2 flex-wrap justify-start mt-4">
-                {popularQueries.map((suggestion) => (
+                {suggestedQueries.map((suggestion) => (
                     <button
                         key={suggestion}
                         onClick={() => {
@@ -131,10 +119,7 @@ export function Search({
                             <h3 className="font-bold text-lg dark:text-gray-100">Analysis from Language Model</h3>
                             <button
                                 type="button"
-                                onClick={() => {
-                                    setQuery('');
-                                    onReset();
-                                }}
+                                onClick={handleClear}
                                 className="px-3 py-2 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 
                                     rounded-lg flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200"
                             >
@@ -145,16 +130,15 @@ export function Search({
                             </button>
                         </div>
 
-                        <div className="text-left space-y-2">
-                            <p className="whitespace-pre-wrap text-gray-900 dark:text-gray-300">
-                                {answer}
-                            </p>
-
-                            {/* Updated Footnote */}
-                            <p className="text-sm text-gray-600 dark:text-gray-400 border-t pt-2 mt-2">
-                                Showing {currentData.length.toLocaleString()} of {originalData.length.toLocaleString()} matching streets. Darker markers indicate stronger relevance to your question.
-                            </p>
+                        {/* Scrollable Answer Box */}
+                        <div className="text-left space-y-2 max-h-[30vh] sm:max-h-[40vh] overflow-y-auto">
+                            <p className="whitespace-pre-wrap text-gray-900 dark:text-gray-300">{answer}</p>
                         </div>
+
+                        {/* Updated Footnote */}
+                        <p className="text-sm text-gray-600 dark:text-gray-400 border-t pt-4 mt-4">
+                            Showing {currentData.length.toLocaleString()} of {originalData.length.toLocaleString()} matching streets. Darker markers indicate stronger relevance to your question.
+                        </p>
                     </div>
                 )}
             </div>

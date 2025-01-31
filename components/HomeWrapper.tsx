@@ -7,6 +7,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { StreetNameEntry } from '../types';
 import LandingPlate from './LandingPlate';
+import { FaEnvelope } from 'react-icons/fa';
 
 const Map = dynamic(() => import('./Map'), {
     ssr: false,
@@ -48,6 +49,13 @@ export default function HomeWrapper({ allData }: { allData: StreetNameEntry[] })
                             onFilter={handleNewSearch}
                             onReset={resetSearch}
                         />
+                    </div>
+
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-auto flex items-center justify-center gap-1">
+                        Jessie Han @2025 | Have Feedback?
+                        <a href="mailto:onejessie@gmail.com" className="inline-flex items-center">
+                            <FaEnvelope className="h-3 w-3" />
+                        </a>
                     </div>
                 </div>
 

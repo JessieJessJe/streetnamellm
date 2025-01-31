@@ -329,19 +329,45 @@ export default function Map({ data, isSearchActive }: MapProps) {
     `;
 
     const fitToBounds = (entries: StreetNameEntry[]) => {
-        if (!map.current) return;
+        if (!map.current || entries.length === 0) return;
 
-        const bounds = new mapboxgl.LngLatBounds();
-        entries.forEach(entry => {
-            if (entry.geolocation) bounds.extend([entry.geolocation.longitude, entry.geolocation.latitude]);
-        });
+        // If search is active, find the highest scoring entries
+        if (isSearchActive) {
+            const maxScore = Math.max(...entries.map(entry => entry.score || 0));
+            const highestScoringEntries = entries.filter(entry =>
+                (entry.score || 0) >= maxScore * 0.5  // Get entries within 90% of max score
+            );
 
-        if (!bounds.isEmpty()) {
-            map.current.fitBounds(bounds, {
-                padding: 40,
-                maxZoom: isSearchActive ? 15 : 11,
-                duration: 2000
+            const bounds = new mapboxgl.LngLatBounds();
+            highestScoringEntries.forEach(entry => {
+                if (entry.geolocation) {
+                    bounds.extend([entry.geolocation.longitude, entry.geolocation.latitude]);
+                }
             });
+
+            if (!bounds.isEmpty()) {
+                map.current.fitBounds(bounds, {
+                    padding: 100,  // Increased padding for better context
+                    maxZoom: 14,
+                    duration: 2000
+                });
+            }
+        } else {
+            // For non-search view, fit to all entries
+            const bounds = new mapboxgl.LngLatBounds();
+            entries.forEach(entry => {
+                if (entry.geolocation) {
+                    bounds.extend([entry.geolocation.longitude, entry.geolocation.latitude]);
+                }
+            });
+
+            if (!bounds.isEmpty()) {
+                map.current.fitBounds(bounds, {
+                    padding: 40,
+                    maxZoom: 11,
+                    duration: 2000
+                });
+            }
         }
     };
 

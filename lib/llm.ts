@@ -79,47 +79,41 @@ function buildFirstPrompt(question: string): string {
     The user has asked: "${question}"
       ### Your Task:
       1. analyze the question and extract "location" and "searchTerms" info for vector search.
-      2. return in JSON format. FOR EXAMPLE: {"location": "null", "searchTerms": "[musicians, artists, dancers, brooklyn]"}
+      2. return in JSON format. FOR EXAMPLE: {"location": "null", "searchTerms": "about asians in queens"}
 
       To extract "location":
-     - If the question contains a borough (e.g., queens, brooklyn, manhattan, bronx, staten island), return "null" (this will be handled as searchTerms)
-     - If the question contains a street/avenue name, determine if it is a legic address. If it is, extract it. If it is not, return "null". (this will be handled as searchTerms)
-     - If the question contains a postal code, neighborhood (e.g., Williamsburg, Astoria, Chinatown, Bushwick, etc), a landmark (e.g., Brooklyn Bridge, Central Park, etc) or specific street name (e.g. Prince Street), extract it. 
+     - If the question contains a borough (e.g., queens, brooklyn, manhattan, bronx, staten island), return "null"
+     - If the question contains a street/avenue name, determine if it is a legit address in nyc. If it is, extract it. If it is not, return "null".
+     - If the question contains a postal code, neighborhood (e.g., Williamsburg, Astoria, Chinatown, Bushwick, etc), a landmark (e.g., Brooklyn Bridge, Central Park, etc), extract it. 
      - If no location found, return "null"
 
       To extract "searchTerms" for vector search.
-     - searchTerms is an array of strings, it will have at least one element. 
-     - Identify key concepts in the question (e.g., asians, history, family, musicians, artists, scientists, activists, queens, brooklyn, staten island, manhattan, bronx etc).  
-     - If a borough or street/avenue name is in the question, include in the searchTerms.
-     - Do not include common words or words that describe this dataset like 'street names' 'streets' 'street' 'names' 'honored' 'people'in the searchTerms.
+     - searchTerms is a string. By default, it should be the question.
+     - Do not include common words or words that describe this dataset like 'about' 'street names' 'streets' 'street' 'names' 'honored' 'people'in the searchTerms.
 
     Example 1:
     User Question: "Street names about love?"
-    Your response: {"location": "null", "searchTerms": "[love, family, love story]"}
+    Your response: {"location": "null", "searchTerms": "love"}
 
     Example 2:
     User Question: "Street names about musicians in WILLIAMSBURG?"
-    Your response: {"location": "williamsburg", "searchTerms": "[musicians]"}
+    Your response: {"location": "williamsburg", "searchTerms": "musicians in williamsburg"}
 
     Example 3:
     User Question: "near the central park?"
-    Your response: {"location": "central park", "searchTerms": "[central park]"}
+    Your response: {"location": "central park", "searchTerms": "central park"}
 
     Example 4:
     User Question: "where is walt whitman street?"
-    Your response: {"location": "null", "searchTerms": "[walt whitman]"}
+    Your response: {"location": "null", "searchTerms": "walt whitman"}
 
     Example 5:
-    User Question: "street names about asians in queens?"
-    Your response: {"location": "null", "searchTerms": "[asians, queens]"}
+    User Question: "which street has the most galleries?"
+    Your response: {"location": "null", "searchTerms": "galleries"}
 
     Example 6:
-    User Question: "brooklyn love stories?"
-    Your response: {"location": "null", "searchTerms": "[brooklyn, love, love story]"}
-
-    Example 7:
     User Question: "Turkish people honored?"
-    Your response: {"location": "null", "searchTerms": "[turkish]"}
+    Your response: {"location": "null", "searchTerms": "turkish"}
 
   `.trim();
 }
