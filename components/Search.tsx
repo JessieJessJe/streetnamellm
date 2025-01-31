@@ -13,7 +13,7 @@ export function Search({
     const [isLoading, setIsLoading] = useState(false);
     const [query, setQuery] = useState('');
     const [suggestedQueries, setSuggestedQueries] = useState<string[]>([]);
-    const [isAccordionOpen, setIsAccordionOpen] = useState(window?.innerWidth >= 1024);
+    const [isAccordionOpen, setIsAccordionOpen] = useState(false);
 
     const allPopularQueries = [
         "Streets honor musicians?",
@@ -31,6 +31,11 @@ export function Search({
 
     useEffect(() => {
         setSuggestedQueries(getRandomQueries());
+    }, []);
+
+    // Set initial state after mount
+    useEffect(() => {
+        setIsAccordionOpen(window?.innerWidth >= 1024);
     }, []);
 
     const handleSubmit = async (e?: React.FormEvent, predefinedQuery?: string) => {
@@ -120,7 +125,6 @@ export function Search({
                             <div className="flex items-center gap-2"
                                 onClick={() => setIsAccordionOpen(!isAccordionOpen)}>
                                 <button
-
                                     className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
                                 >
                                     <svg
@@ -134,7 +138,6 @@ export function Search({
                                     </svg>
                                 </button>
                                 <h3 className="text-md text-gray-700 dark:text-gray-100">Analysis from Language Model</h3>
-
                             </div>
 
                             <button
