@@ -52,8 +52,8 @@ export default function HomeWrapper({ allData }: { allData: StreetNameEntry[] })
                     </div>
 
                     {/* Desktop footer */}
-                    <div className="hidden lg:flex text-xs text-gray-500 dark:text-gray-400 mt-auto items-center justify-center gap-1">
-                        Jessie Han @2025 | Have Feedback?
+                    <div className="hidden lg:flex text-xs text-gray-500 dark:text-gray-400 mt-auto items-center justify-center gap-1 mb-1">
+                        made by jessiehan.xyz | have feedback?
                         <a href="mailto:onejessie@gmail.com" className="inline-flex items-center">
                             <FaEnvelope className="h-3 w-3" />
                         </a>
@@ -68,8 +68,8 @@ export default function HomeWrapper({ allData }: { allData: StreetNameEntry[] })
                 </div>
 
                 {/* Mobile footer */}
-                <div className="lg:hidden text-xs text-gray-500 dark:text-gray-400 p-4 flex items-center justify-center gap-1">
-                    Jessie Han @2025 | Have Feedback?
+                <div className="lg:hidden text-xs text-gray-500 dark:text-gray-400 p-4 flex items-center justify-center gap-1 mb-1">
+                    made by jessiehan.xyz | have geedback?
                     <a href="mailto:onejessie@gmail.com" className="inline-flex items-center">
                         <FaEnvelope className="h-3 w-3" />
                     </a>
