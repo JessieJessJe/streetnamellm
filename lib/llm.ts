@@ -36,8 +36,6 @@ export async function queryLLM({ question }: LLMRequest): Promise<LLMResponse> {
 
     const weaviateData = await weaviateResponse.json();
 
-    console.log(weaviateData.parsedEntries, "weaviateData");
-
     // 3 Return results for visualization
     let filteredEntries: StreetNameEntry[] = weaviateData.parsedEntries || [];
 
@@ -112,8 +110,8 @@ function buildFirstPrompt(question: string): string {
     Your response: {"location": "null", "searchTerms": "galleries"}
 
     Example 6:
-    User Question: "Turkish people honored?"
-    Your response: {"location": "null", "searchTerms": "turkish"}
+    User Question: "why people are being remembered?"
+    Your response: {"location": "null", "searchTerms": "remember"}
 
   `.trim();
 }
