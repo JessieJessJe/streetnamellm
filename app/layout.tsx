@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { Metadata } from 'next'
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -12,8 +12,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata = {
-  title: 'AI Mapper | NYC Commemorative Streets Explorer',
+// eslint-disable-next-line no-unused-vars
+export const metadata: Metadata = {
+  title: 'Street Names AI Mapper | NYC Commemorative Streets Explorer',
   description: 'Explore NYC commemorative street names and their stories using AI. Discover the history behind street names in your neighborhood.',
   keywords: ['NYC', 'street names', 'history', 'commemorative', 'interactive map'],
   openGraph: {
@@ -49,9 +50,9 @@ export const metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="en">
       <body
