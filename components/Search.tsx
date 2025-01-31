@@ -13,6 +13,7 @@ export function Search({
     const [isLoading, setIsLoading] = useState(false);
     const [query, setQuery] = useState('');
     const [suggestedQueries, setSuggestedQueries] = useState<string[]>([]);
+    const [isAccordionOpen, setIsAccordionOpen] = useState(window?.innerWidth >= 1024);
 
     const allPopularQueries = [
         "Streets honor musicians?",
@@ -89,7 +90,7 @@ export function Search({
             </form>
 
             {/* Suggested Queries */}
-            <div className="flex gap-2 flex-wrap justify-start mt-4">
+            <div className="flex gap-2 flex-wrap items-start text-left mt-4">
                 {suggestedQueries.map((suggestion) => (
                     <button
                         key={suggestion}
@@ -114,9 +115,28 @@ export function Search({
                         <div className="h-4 w-full bg-gray-300 dark:bg-gray-700 rounded mt-2"></div>
                     </div>
                 ) : answer && (
-                    <div className="p-4 bg-white dark:bg-gray-900 rounded-lg shadow dark:shadow-gray-900">
-                        <div className="flex justify-between items-center mb-2">
-                            <h3 className="font-bold text-lg dark:text-gray-100">Analysis from Language Model</h3>
+                    <div className="p-2 bg-white dark:bg-gray-900 rounded-lg shadow dark:shadow-gray-900">
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-2"
+                                onClick={() => setIsAccordionOpen(!isAccordionOpen)}>
+                                <button
+
+                                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className={`h-5 w-5 transform transition-transform ${isAccordionOpen ? 'rotate-180' : ''}`}
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                <h3 className="text-md text-gray-700 dark:text-gray-100">Analysis from Language Model</h3>
+
+                            </div>
+
                             <button
                                 type="button"
                                 onClick={handleClear}
@@ -126,19 +146,29 @@ export function Search({
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                                 </svg>
-                                Clear
+                                <span className="hidden lg:inline">Clear</span>
                             </button>
                         </div>
 
-                        {/* Scrollable Answer Box */}
-                        <div className="text-left space-y-2 max-h-[30vh] sm:max-h-[40vh] overflow-y-auto">
-                            <p className="whitespace-pre-wrap text-gray-900 dark:text-gray-300">{answer}</p>
-                        </div>
+                        {/* Collapsible Content */}
+                        <div
+                            className={`transition-all duration-300 ease-in-out overflow-hidden`}
+                            style={{
+                                maxHeight: isAccordionOpen ? '50vh' : '0',
+                                opacity: isAccordionOpen ? 1 : 0
+                            }}
+                        >
+                            {/* Scrollable Answer Box */}
+                            <div className="text-left space-y-2 overflow-y-auto max-h-[40vh] border-t pt-2">
+                                <p className="whitespace-pre-wrap text-gray-900 dark:text-gray-300">{answer}</p>
+                            </div>
 
-                        {/* Updated Footnote */}
-                        <p className="text-sm text-gray-600 dark:text-gray-400 border-t pt-4 mt-4">
-                            Showing {currentData.length.toLocaleString()} of {originalData.length.toLocaleString()} matching streets. Darker markers indicate stronger relevance to your question.
-                        </p>
+                            {/* Updated Footnote */}
+                            <p className="text-sm text-gray-600 dark:text-gray-400 border-t pt-2 mt-4">
+                                Showing {currentData.length.toLocaleString()} of {originalData.length.toLocaleString()} matching streets.
+                                Darker markers indicate stronger relevance to your question.
+                            </p>
+                        </div>
                     </div>
                 )}
             </div>

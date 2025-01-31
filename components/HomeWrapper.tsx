@@ -30,8 +30,8 @@ export default function HomeWrapper({ allData }: { allData: StreetNameEntry[] })
     return (
         <main className="min-h-screen bg-gray-50 dark:bg-gray-900">
             <div className="flex flex-col lg:flex-row h-full lg:h-screen">
-                <div className="lg:w-2/5 h-full flex flex-col p-4">
-                    <div className="flex-1 flex items-end">
+                <div className="lg:w-2/5 h-full flex flex-col">
+                    <div className="flex-1 flex items-end mt-4">
                         <div className="text-center w-full">
                             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100">
                                 Memories Around the Corner
@@ -51,7 +51,8 @@ export default function HomeWrapper({ allData }: { allData: StreetNameEntry[] })
                         />
                     </div>
 
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-auto flex items-center justify-center gap-1">
+                    {/* Desktop footer */}
+                    <div className="hidden lg:flex text-xs text-gray-500 dark:text-gray-400 mt-auto items-center justify-center gap-1">
                         Jessie Han @2025 | Have Feedback?
                         <a href="mailto:onejessie@gmail.com" className="inline-flex items-center">
                             <FaEnvelope className="h-3 w-3" />
@@ -65,11 +66,17 @@ export default function HomeWrapper({ allData }: { allData: StreetNameEntry[] })
                         <Map data={currentData} isSearchActive={currentData.length < 1000} />
                     </Suspense>
                 </div>
+
+                {/* Mobile footer */}
+                <div className="lg:hidden text-xs text-gray-500 dark:text-gray-400 p-4 flex items-center justify-center gap-1">
+                    Jessie Han @2025 | Have Feedback?
+                    <a href="mailto:onejessie@gmail.com" className="inline-flex items-center">
+                        <FaEnvelope className="h-3 w-3" />
+                    </a>
+                </div>
             </div>
             <Analytics />
             <SpeedInsights />
         </main>
-
-
     );
 }
