@@ -270,8 +270,6 @@ export default function Map({ data, isSearchActive }: MapProps) {
         markers.current = [];
 
         const scores = entries.map(entry => entry.score || 0);
-        const minScore = Math.min(...scores);
-        const maxScore = Math.max(...scores);
 
         const getMarkerColor = (score: number) => {
             const cutoffScore = 0.3; // 70% as cutoff point
