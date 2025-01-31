@@ -274,14 +274,19 @@ export default function Map({ data, isSearchActive }: MapProps) {
         const maxScore = Math.max(...scores);
 
         const getMarkerColor = (score: number) => {
-            const normalizedScore = maxScore === minScore ? 0.5 : (score - minScore) / (maxScore - minScore);
-            const startColor = { r: 128, g: 128, b: 128 };
-            const endColor = { r: 34, g: 102, b: 0 };
+            const cutoffScore = 0.3; // 70% as cutoff point
 
-            const r = Math.round(startColor.r + (endColor.r - startColor.r) * normalizedScore);
-            const g = Math.round(startColor.g + (endColor.g - startColor.g) * normalizedScore);
-            const b = Math.round(startColor.b + (endColor.b - startColor.b) * normalizedScore);
-            const opacity = 0.4 + (normalizedScore * 0.6);
+            if (score >= cutoffScore) {
+                return 'rgba(34, 102, 0, 1)'; // Pure green for high scores
+            }
+
+            const startColor = { r: 128, g: 128, b: 128 }; // Gray
+            const endColor = { r: 34, g: 102, b: 0 };      // Green
+
+            const r = Math.round(startColor.r + (endColor.r - startColor.r) * score);
+            const g = Math.round(startColor.g + (endColor.g - startColor.g) * score);
+            const b = Math.round(startColor.b + (endColor.b - startColor.b) * score);
+            const opacity = 0.5 + (score * 0.5);
 
             return `rgba(${r}, ${g}, ${b}, ${opacity})`;
         };

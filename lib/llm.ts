@@ -39,18 +39,16 @@ export async function queryLLM({ question }: LLMRequest): Promise<LLMResponse> {
     console.log(weaviateData.parsedEntries, "weaviateData");
 
     // 3 Return results for visualization
-    //placeholder for calling llm to generate a summary answer
-    // 3️⃣ Filter the top 10 most relevant results
     let filteredEntries: StreetNameEntry[] = weaviateData.parsedEntries || [];
 
-    // If more than 10 results, sort by score and pick top 10
-    if (filteredEntries.length > 10) {
+    // If more than 50 results, sort by score and pick top 10
+    if (filteredEntries.length > 50) {
       filteredEntries = filteredEntries
         .sort((a, b) => (b.score ?? 0) - (a.score ?? 0)) // Sort descending by score
-        .slice(0, 10);
+        .slice(0, 50);
     }
 
-    // 4️⃣ Call OpenAI LLM to generate a summary
+    // 4.Call OpenAI LLM to generate a summary
     const summaryPrompt = buildSummaryPrompt(filteredEntries, question);
     const summaryResponse = await fetch("/api/llm", {
       method: "POST",
@@ -77,34 +75,51 @@ export async function queryLLM({ question }: LLMRequest): Promise<LLMResponse> {
 
 function buildFirstPrompt(question: string): string {
   return `
-    You are an intelligent assistant with access to a dataset about NYC honorary street names.
+    You are an intelligent artist, historian who love nyc stories and have access to a dataset about NYC honorary street names.
     The user has asked: "${question}"
       ### Your Task:
       1. analyze the question and extract "location" and "searchTerms" info for vector search.
-      2. return in JSON format. FOR EXAMPLE: {"location": "brooklyn", "searchTerms": "musicians"}
+      2. return in JSON format. FOR EXAMPLE: {"location": "null", "searchTerms": "[musicians, artists, dancers, brooklyn]"}
 
       To extract "location":
-      If the question contains a neighborhood, borough, or specific street, extract it. if not, return "null"
+     - If the question contains a borough (e.g., queens, brooklyn, manhattan, bronx, staten island), return "null" (this will be handled as searchTerms)
+     - If the question contains a street/avenue name, determine if it is a legic address. If it is, extract it. If it is not, return "null". (this will be handled as searchTerms)
+     - If the question contains a postal code, neighborhood (e.g., Williamsburg, Astoria, Chinatown, Bushwick, etc), a landmark (e.g., Brooklyn Bridge, Central Park, etc) or specific street name (e.g. Prince Street), extract it. 
+     - If no location found, return "null"
 
       To extract "searchTerms" for vector search.
-     - Identify key concepts (e.g., musicians, artists, scientists, activists).  
-     - Expand broad concepts into related term. (e.g., "creative people" → "artists", "musicians")  
+     - searchTerms is an array of strings, it will have at least one element. 
+     - Identify key concepts in the question (e.g., asians, history, family, musicians, artists, scientists, activists, queens, brooklyn, staten island, manhattan, bronx etc).  
+     - If a borough or street/avenue name is in the question, include in the searchTerms.
+     - Do not include common words or words that describe this dataset like 'street names' 'streets' 'street' 'names' 'honored' 'people'in the searchTerms.
 
     Example 1:
     User Question: "Street names about love?"
-    Your response: {"location": "null", "searchTerms": "love"}
+    Your response: {"location": "null", "searchTerms": "[love, family, love story]"}
 
     Example 2:
     User Question: "Street names about musicians in WILLIAMSBURG?"
-    Your response: {"location": "williamsburg", "searchTerms": "musicians"}
+    Your response: {"location": "williamsburg", "searchTerms": "[musicians]"}
 
     Example 3:
-    User Question: "near the Brooklyn Bridge?"
-    Your response: {"location": "brooklyn bridge", "searchTerms": "brooklyn bridge"
+    User Question: "near the central park?"
+    Your response: {"location": "central park", "searchTerms": "[central park]"}
 
     Example 4:
     User Question: "where is walt whitman street?"
-    Your response: {"location": "null", "searchTerms": "walt whitman"
+    Your response: {"location": "null", "searchTerms": "[walt whitman]"}
+
+    Example 5:
+    User Question: "street names about asians in queens?"
+    Your response: {"location": "null", "searchTerms": "[asians, queens]"}
+
+    Example 6:
+    User Question: "brooklyn love stories?"
+    Your response: {"location": "null", "searchTerms": "[brooklyn, love, love story]"}
+
+    Example 7:
+    User Question: "Turkish people honored?"
+    Your response: {"location": "null", "searchTerms": "[turkish]"}
 
   `.trim();
 }
@@ -116,15 +131,24 @@ function buildSummaryPrompt(
 ): string {
   const formattedEntries = entries
     .map(
-      (entry, index) =>
-        `${index + 1}. **${entry.honorary_name}** 
-        }) - ${entry.bio}`
+      (entry) =>
+        `${entry.honorary_name}, current address is ${entry.limits},
+        biography of the honoree: ${entry.bio}`
     )
     .join("\n");
 
   return `
-      You are an AI that provides a short summary of NYC honorary street names.
-      Given the following list of honorary streets and their descriptions, answer the following "${question}" 
+      You are an intelligent artist, poet, and historian who love nyc stories and have access to a dataset about NYC honorary street names.
+      The user has asked: "${question}" 
+
+      Assume the question is in context about NYC honorary street names, the stories behind the street names, and the people who are honored on the street.
+
+      We found the following list of honorary streets to be relevant. 
+      
+      Answer the user's question based on the provided street entries.
+      If possible, provide a summary of the honoree's love and passion and how it relates to being honored on a street.
+      Finally, say based on my knowledgefrom the internet and answer the question based on your knowledge in 2~3 sentence.
+
       ${formattedEntries}
     `.trim();
 }
