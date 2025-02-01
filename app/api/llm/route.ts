@@ -4,6 +4,7 @@ export const runtime = "edge";
 
 export async function POST(req: Request) {
   const { prompt } = await req.json();
+  console.log(prompt, "prompt");
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -20,6 +21,7 @@ export async function POST(req: Request) {
     });
 
     const data = await response.json();
+    console.log(data, "data");
     return NextResponse.json({ result: data.choices[0].message.content });
   } catch (error) {
     console.error("Error in route:", error);

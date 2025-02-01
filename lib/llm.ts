@@ -10,8 +10,10 @@ export async function queryLLM({ question }: LLMRequest): Promise<LLMResponse> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt: firstPrompt }),
     });
-    if (!firstResponse.ok) throw new Error("LLM first request failed");
-
+    if (!firstResponse.ok) {
+      console.log(firstResponse, "firstResponse");
+      throw new Error("LLM first request failed");
+    }
     const firstResult = await firstResponse.json();
 
     let queryParams = { location: "null", searchTerms: "newyork" };
@@ -40,10 +42,10 @@ export async function queryLLM({ question }: LLMRequest): Promise<LLMResponse> {
     let filteredEntries: StreetNameEntry[] = weaviateData.parsedEntries || [];
 
     // If more than 50 results, sort by score and pick top 10
-    if (filteredEntries.length > 50) {
+    if (filteredEntries.length > 10) {
       filteredEntries = filteredEntries
         .sort((a, b) => (b.score ?? 0) - (a.score ?? 0)) // Sort descending by score
-        .slice(0, 50);
+        .slice(0, 10);
     }
 
     // 4.Call OpenAI LLM to generate a summary
